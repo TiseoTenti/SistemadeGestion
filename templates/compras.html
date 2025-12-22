@@ -1,0 +1,320 @@
+{% extends "base.html" %} 
+{% block content %}
+<h2>Registrar Compra</h2>
+
+<form id="formCompra" class="mb-3">
+  <div class="row g-2">
+    <div class="col-md-3">
+      <select class="form-select" name="id_proveedor" id="selectProveedor" required>
+        <option value="">Seleccionar proveedor</option>
+      </select>
+    </div>
+
+  <div class="col-md-3">
+      <select class="form-select" name="id_insumo" id="selectInsumo" required>
+          <option value="">Seleccionar insumo</option>
+      </select>
+  </div>
+
+    <div class="col-md-2">
+      <input class="form-control" name="cantidad" type="number" step="0.01" placeholder="Cantidad" required>
+    </div>
+    <div class="col-md-2">
+      <input class="form-control" name="precio_unitario" type="number" step="0.01" placeholder="Precio unitario" required>
+    </div>
+    <div class="col-md-2">
+      <input class="form-control" name="fecha" type="date">
+    </div>
+  </div>
+  <div class="mt-2">
+    <button class="btn btn-primary">Registrar Compra</button>
+  </div>
+</form>
+
+<div id="msg" class="fw-bold text-center mb-3"></div>
+
+
+<div class="row mb-3">
+  <div class="col-md-4">
+    <input list="insumosLista" 
+       id="buscarInsumo" 
+       class="form-control" 
+       placeholder="Buscar por nombre de insumo">
+    <datalist id="insumosLista"></datalist>
+
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-secondary w-100" onclick="buscarHistorial()">
+      Buscar
+    </button>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-outline-primary w-100" onclick="cargarHistorialCompras()">
+      Ver todos
+    </button>
+  </div>
+</div>
+
+
+
+<hr>
+
+<h3>📜 Historial de Compras</h3>
+<table class="table table-striped" id="tblCompras">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Fecha</th>
+      <th>Proveedor</th>
+      <th>Insumo</th>
+      <th>Cantidad</th>
+      <th>Precio Unitario</th>
+      <th>Total</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- Modal Editar Compra -->
+<div class="modal fade" id="modalEditarCompra" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formEditarCompra" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Compra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="id_compra">
+        <div class="mb-3">
+          <label>Cantidad</label>
+          <input type="number" step="0.01" id="cantidad" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label>Precio Unitario</label>
+          <input type="number" step="0.01" id="precio_unitario" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label>Fecha</label>
+          <input type="date" id="fecha" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+async function cargarHistorialCompras() {
+  const res = await fetch('/api/v1/compras/');
+  if (!res.ok) return;
+  const data = await res.json();
+  renderTablaCompras(data); // <--- Aquí se renderiza todo
+}
+
+
+function renderTablaCompras(data) {
+  const tbody = document.querySelector('#tblCompras tbody');
+  tbody.innerHTML = '';
+
+  data.forEach(c => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${c.id_compra}</td>
+        <td>${c.fecha}</td>
+        <td>${c.proveedor || ''}</td>
+        <td>${c.insumo || ''}</td>
+        <td>${c.cantidad}</td>
+        <td>$${c.precio_unitario.toFixed(2)}</td>
+        <td>$${c.total.toFixed(2)}</td>
+        <td>
+          <button class="btn btn-sm btn-warning"
+            onclick="abrirModalEditar(${c.id_compra}, ${c.cantidad}, ${c.precio_unitario}, '${c.fecha}')">
+            Editar
+          </button>
+
+          ${c.revisado
+            ? '<span class="badge bg-success ms-2">Revisado</span>'
+            : `<button class="btn btn-sm btn-success ms-2"
+                onclick="marcarRevisado(${c.id_compra})">
+                Revisado
+              </button>`}
+        </td>
+      </tr>`;
+  });
+}
+
+
+async function cargarAutocompleteInsumos() {
+  const res = await fetch('/api/v1/compras/insumos');
+  if (!res.ok) return;
+  const data = await res.json();
+
+  const datalist = document.getElementById('insumosLista');
+  datalist.innerHTML = '';
+  data.forEach(i => {
+    datalist.innerHTML += `<option value="${i.nombre}"></option>`;
+  });
+}
+
+
+
+
+
+
+async function actualizarCompra(id_compra, nuevaCantidad, nuevoPrecio, nuevaFecha) {
+  const body = {
+    cantidad: nuevaCantidad,
+    precio_unitario: nuevoPrecio,
+    fecha: nuevaFecha
+  };
+
+  const res = await fetch(`/api/v1/compras/${id_compra}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if (res.ok) {
+    await cargarHistorialCompras();
+    alert('Compra actualizada correctamente');
+  } else {
+    const err = await res.json();
+    alert('Error al actualizar compra: ' + (err.error || 'Desconocido'));
+  }
+}
+
+async function cargarProveedores() {
+  const res = await fetch('/api/v1/proveedores/');
+  if (!res.ok) return;
+
+  const data = await res.json();
+  const select = document.getElementById('selectProveedor');
+
+  select.innerHTML = '<option value="">Seleccionar proveedor</option>';
+
+  data.forEach(p => {
+    select.innerHTML += `
+      <option value="${p.id_proveedor}">
+        ${p.nombre} - ${p.cuit}
+      </option>`;
+  });
+}
+
+async function cargarInsumos() {
+  const res = await fetch('/api/v1/insumos/');
+  if (!res.ok) return;
+
+  const data = await res.json();
+  const select = document.getElementById('selectInsumo');
+
+  select.innerHTML = '<option value="">Seleccionar insumo</option>';
+
+  data.forEach(i => {
+    select.innerHTML += `
+      <option value="${i.id_insumo}">
+        ${i.nombre} (${i.unidad_medida})
+      </option>`;
+  });
+}
+
+
+
+
+async function buscarHistorial() {
+  const nombre = document.getElementById('buscarInsumo').value.trim();
+  if (!nombre) return;
+
+  const res = await fetch(`/api/v1/compras/buscar?nombre=${encodeURIComponent(nombre)}`);
+  if (!res.ok) return;
+
+  const data = await res.json();
+  renderTablaCompras(data);
+}
+
+
+
+
+
+
+async function marcarRevisado(id) {
+  const res = await fetch(`/api/v1/compras/${id}/revisar`, {
+    method: 'PUT'
+  });
+
+  if (res.ok) {
+    await cargarHistorialCompras();
+  } else {
+    alert('No se pudo marcar como revisada');
+  }
+}
+
+
+
+// Función para abrir modal y cargar valores
+function abrirModalEditar(id, cantidad, precio, fecha) {
+  document.getElementById('id_compra').value = id;
+  document.getElementById('cantidad').value = cantidad;
+  document.getElementById('precio_unitario').value = precio;
+  document.getElementById('fecha').value = fecha;
+
+  const modalEl = document.getElementById('modalEditarCompra');
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+}
+
+// Listener del formulario de edición
+document.getElementById('formEditarCompra').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = document.getElementById('id_compra').value;
+  const cantidad = parseFloat(document.getElementById('cantidad').value);
+  const precio = parseFloat(document.getElementById('precio_unitario').value);
+  const fecha = document.getElementById('fecha').value;
+
+  await actualizarCompra(id, cantidad, precio, fecha);
+
+  const modalEl = document.getElementById('modalEditarCompra');
+  const modal = bootstrap.Modal.getInstance(modalEl);
+  modal.hide();
+});
+
+document.getElementById('formCompra').addEventListener('submit', async e => {
+  e.preventDefault();
+  const body = Object.fromEntries(new FormData(e.target).entries());
+  body.cantidad = parseFloat(body.cantidad);
+  body.precio_unitario = parseFloat(body.precio_unitario);
+
+  const res = await fetch('/api/v1/compras/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  const msg = document.getElementById('msg');
+  if (res.ok) {
+    msg.textContent = '✅ Compra registrada correctamente';
+    msg.classList.remove('text-danger');
+    msg.classList.add('text-success');
+    e.target.reset();
+    await cargarHistorialCompras();
+  } else {
+    const err = await res.json();
+    msg.textContent = '❌ Error: ' + (err.error || 'No se pudo registrar la compra');
+    msg.classList.remove('text-success');
+    msg.classList.add('text-danger');
+  }
+});
+
+
+
+window.addEventListener('load', async () => {
+  await cargarProveedores();
+  await cargarInsumos();
+  await cargarAutocompleteInsumos();
+  await cargarHistorialCompras();
+});
+</script>
+{% endblock %}

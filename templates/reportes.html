@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4 text-center">📊 Reportes del Sistema</h2>
+
+  <div class="card shadow p-4">
+    <div id="resumen"></div>
+  </div>
+
+  <div class="mt-5">
+    <h4>⚠️ Insumos por debajo del stock mínimo</h4>
+    <table class="table table-bordered table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>Código</th>
+          <th>Nombre</th>
+          <th>Cantidad Actual</th>
+          <th>Stock Mínimo</th>
+          <th>Unidad</th>
+        </tr>
+      </thead>
+      <tbody id="tablaBajoStock"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function cargarReportes() {
+  const resResumen = await fetch('/api/reportes/resumen');
+  const resumen = await resResumen.json();
+
+  document.getElementById('resumen').innerHTML = `
+    <p><strong>Insumos registrados:</strong> ${resumen.insumos_registrados}</p>
+    <p><strong>Alertas pendientes:</strong> ${resumen.alertas_pendientes}</p>
+    <p><strong>Valor total de compras:</strong> $${resumen.valor_total_compras.toFixed(2)}</p>
+    <p><strong>Tanques fabricados:</strong> ${resumen.tanques_fabricados}</p>
+    <p><strong>Costo total de tanques:</strong> $${resumen.costo_total_tanques.toFixed(2)}</p>
+  `;
+
+  const resBajoStock = await fetch('/api/reportes/bajo_stock');
+  const bajoStock = await resBajoStock.json();
+  const tbody = document.getElementById('tablaBajoStock');
+  tbody.innerHTML = '';
+  bajoStock.forEach(i => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${i.codigo}</td>
+        <td>${i.nombre}</td>
+        <td>${i.cantidad}</td>
+        <td>${i.stock_minimo}</td>
+        <td>${i.unidad_medida}</td>
+      </tr>`;
+  });
+}
+
+window.onload = cargarReportes;
+</script>
+{% endblock %}

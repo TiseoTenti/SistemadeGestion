@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Usuarios</h3>
+{% if current_user.role == 'administrador' %}
+  <form method="post" action="{{ url_for('api_user.user_new') }}" class="mb-3">
+    <input name="username" placeholder="Usuario" class="form-control mb-1" required>
+    <input name="password" placeholder="Contraseña" class="form-control mb-1" type="password" required>
+    <select name="role" class="form-select mb-1" required>
+      <option value="administrador">administrador</option>
+      <option value="carga">carga</option>
+      <option value="lectura">lectura</option>
+    </select>
+    <button class="btn btn-primary">Crear usuario</button>
+  </form>
+{% endif %}
+<table class="table table-sm">
+  <thead><tr><th>Usuario</th><th>Rol</th></tr></thead>
+  <tbody>
+    {% for u in users %}
+      <tr><td>{{ u.username }}</td><td>{{ u.role }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4 text-center">📢 Alertas de Stock</h2>
+
+  <div class="mb-3 text-end">
+    <button id="btnCargar" class="btn btn-primary">Actualizar</button>
+  </div>
+
+  <table class="table table-bordered table-hover">
+    <thead class="table-dark">
+      <tr>
+        <th>ID</th>
+        <th>Insumo</th>
+        <th>Cantidad Actual</th>
+        <th>Stock Mínimo</th>
+        <th>Estado</th>
+        <th>Fecha</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tablaAlertas"></tbody>
+  </table>
+</div>
+
+<script>
+async function cargarAlertas() {
+  const res = await fetch('/api/alertas/');
+  const alertas = await res.json();
+  const tbody = document.getElementById('tablaAlertas');
+  tbody.innerHTML = '';
+
+  alertas.forEach(a => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${a.id_alerta}</td>
+        <td>${a.insumo}</td>
+        <td>${a.cantidad_actual}</td>
+        <td>${a.stock_minimo}</td>
+        <td>${a.estado}</td>
+        <td>${a.fecha}</td>
+        <td>
+          ${a.estado === 'Pendiente' 
+            ? `<button class="btn btn-success btn-sm" onclick="resolver(${a.id_alerta})">Resolver</button>` 
+            : `<span class="text-secondary">✔</span>`}
+        </td>
+      </tr>`;
+  });
+}
+
+async function resolver(id) {
+  await fetch(`/api/alertas/${id}/resolver`, { method: 'PUT' });
+  cargarAlertas();
+}
+
+document.getElementById('btnCargar').addEventListener('click', cargarAlertas);
+window.onload = cargarAlertas;
+</script>
+{% endblock %}

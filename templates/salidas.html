@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Registrar salida de insumo</h3>
+<form method="POST">
+  <div class="mb-2">
+    <label for="id_tanque">Tanque en fabricación</label>
+    <select name="id_tanque" class="form-select" required>
+      {% for t in tanques %}
+        <option value="{{ t.id_tanque }}">{{ t.modelo }} ({{ t.cliente or 'Sin cliente' }})</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="mb-2">
+    <label for="id_insumo">Insumo</label>
+    <select name="id_insumo" class="form-select" required>
+      {% for i in insumos %}
+        <option value="{{ i.id_insumo }}">{{ i.nombre }} - Stock: {{ i.cantidad }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="mb-2">
+    <label for="cantidad_usada">Cantidad usada</label>
+    <input type="number" name="cantidad_usada" class="form-control" step="0.01" required>
+  </div>
+
+  <div class="mb-2">
+    <label for="costo_unitario">Costo unitario</label>
+    <input type="number" name="costo_unitario" class="form-control" step="0.01" required>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Registrar salida</button>
+</form>
+{% endblock %}

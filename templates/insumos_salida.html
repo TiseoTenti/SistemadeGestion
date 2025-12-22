@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Registrar Salida de Insumos</h2>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form id="formSalida">
+      <div class="row g-2">
+        <div class="col-md-4">
+          <label class="form-label">Tanque Fabricado</label>
+          <select class="form-select" name="id_tanque" id="selTanque" required></select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Insumo</label>
+          <select class="form-select" name="id_insumo" id="selInsumo" required></select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Cantidad usada</label>
+          <input class="form-control" type="number" name="cantidad_usada" step="0.01" min="0" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-primary w-100">Registrar Salida</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<h4>Salidas Registradas</h4>
+<table class="table table-striped" id="tblSalidas">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Tanque</th>
+      <th>Insumo</th>
+      <th>Cantidad Usada</th>
+      <th>Costo Unitario</th>
+      <th>Subtotal</th>
+      <th>Fecha</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+// -----------------------------
+// Cargar tanques fabricados
+// -----------------------------
+async function cargarTanques() {
+  const res = await fetch('/api/v1/tanques/');  // Ajustar si tiene otro prefijo
+  const data = await res.json();
+  const sel = document.getElementById('selTanque');
+  sel.innerHTML = '<option value="">Seleccione un tanque</option>';
+  data.forEach(t => {
+    sel.innerHTML += `<option value="${t.id_tanque}">${t.modelo || 'Tanque'} (#${t.id_tanque})</option>`;
+  });
+}
+
+// -----------------------------
+// Cargar insumos disponibles
+// -----------------------------
+async function cargarInsumos() {
+  const res = await fetch('/api/v1/insumos/');
+  const data = await res.json();
+  const sel = document.getElementById('selInsumo');
+  sel.innerHTML = '<option value="">Seleccione un insumo</option>';
+  data.forEach(i => {
+    sel.innerHTML += `<option value="${i.id_insumo}">${i.nombre} (Stock: ${i.cantidad})</option>`;
+  });
+}
+
+// -----------------------------
+// Cargar salidas registradas
+// -----------------------------
+async function cargarSalidas() {
+  const res = await fetch('/api/v1/insumos_salida/');
+  const data = await res.json();
+  const tbody = document.querySelector('#tblSalidas tbody');
+  tbody.innerHTML = '';
+  data.forEach(r => {
+    tbody.innerHTML += `<tr>
+      <td>${r.id_tanque_insumo}</td>
+      <td>${r.id_tanque}</td>
+      <td>${r.id_insumo}</td>
+      <td>${r.cantidad_usada}</td>
+      <td>$${r.costo_unitario.toFixed(2)}</td>
+      <td>$${(r.cantidad_usada * r.costo_unitario).toFixed(2)}</td>
+      <td>${r.fecha_registro ? new Date(r.fecha_registro).toLocaleString() : '-'}</td>
+      
+      <td><button class="btn btn-sm btn-warning" onclick="editarSalida(${r.id_tanque_insumo})">Editar</button><button class="btn btn-sm btn-danger"onclick="eliminarSalida(${r.id_tanque_insumo})">Eliminar </button> </td>
+        
+    </tr>`;
+  });
+}
+
+async function eliminarSalida(id) {
+  if (!confirm('¿Eliminar esta salida y revertir el stock?')) return;
+
+  const res = await fetch(`/api/v1/insumos_salida/${id}`, {
+    method: 'DELETE'
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    alert('✅ Salida eliminada y stock restaurado');
+    cargarInsumos();
+    cargarSalidas();
+  } else {
+    alert('⚠️ Error: ' + (data.error || 'No se pudo eliminar'));
+  }
+}
+
+
+
+async function editarSalida(id) {
+  const res = await fetch(`/api/v1/insumos_salida/${id}`);
+  if (!res.ok) return alert('No se pudo cargar la salida');
+
+  const r = await res.json();
+
+  const form = document.getElementById('formSalida');
+  form.id_tanque.value = r.id_tanque;
+  form.id_insumo.value = r.id_insumo;
+  form.cantidad_usada.value = r.cantidad_usada;
+
+  form.dataset.editando = id;
+}
+
+
+// -----------------------------
+// Registrar salida (POST)
+// -----------------------------
+document.getElementById('formSalida').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const body = Object.fromEntries(fd.entries());
+  body.cantidad_usada = parseFloat(body.cantidad_usada || 0);
+
+  if (form.dataset.editando) {
+    // UPDATE: modificar salida existente
+    const res = await fetch(`/api/v1/insumos_salida/${form.dataset.editando}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert('✅ Salida actualizada correctamente');
+    } else {
+      alert('⚠️ Error: ' + (data.error || 'No se pudo actualizar'));
+    }
+
+    delete form.dataset.editando; // limpiar modo edición
+  } else {
+    // CREATE: registrar nueva salida
+    const res = await fetch('/api/v1/insumos_salida/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert('✅ Salida registrada correctamente');
+    } else {
+      alert('⚠️ Error: ' + (data.error || 'No se pudo registrar'));
+    }
+  }
+
+  form.reset();
+  cargarInsumos();
+  cargarSalidas();
+});
+
+
+// Inicializar
+window.addEventListener('load', () => {
+  cargarTanques();
+  cargarInsumos();
+  cargarSalidas();
+});
+</script>
+{% endblock %}

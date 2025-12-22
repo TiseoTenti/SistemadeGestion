@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Proveedores</h2>
+<form id="formProveedor" class="mb-3">
+  <div class="row g-2">
+    <div class="col-md-3"><input class="form-control" name="nombre" placeholder="Nombre" required></div>
+    <div class="col-md-4"><input class="form-control" name="razon_social" placeholder="Razón social" required></div>
+    <div class="col-md-3"><input class="form-control" name="cuit" placeholder="CUIT" required></div>
+    <div class="col-md-5"><input class="form-control" name="email" placeholder="Email"></div>
+  </div>
+  <div class="mt-2"><button class="btn btn-success">Crear Proveedor</button></div>
+</form>
+
+
+
+<div class="row mb-3">
+  <div class="col-md-6 position-relative">
+    <input
+      type="text"
+      id="buscadorProveedor"
+      class="form-control"
+      placeholder="Buscar proveedor por nombre..."
+      autocomplete="off"
+    >
+    <div id="sugerenciasProveedores"
+         class="list-group position-absolute w-100"></div>
+  </div>
+
+  <div class="col-md-3">
+    <button class="btn btn-primary w-100" onclick="buscarProveedor()">
+      Buscar
+    </button>
+  </div>
+
+  <div class="col-md-3">
+    <button class="btn btn-secondary w-100" onclick="cargarProveedores()">
+      Ver todos
+    </button>
+  </div>
+</div>
+
+
+
+
+
+
+<table class="table" id="tblProveedores"><thead><tr><th>ID</th> <th>Nombre</th><th>Razón</th><th>CUIT</th><th>Email</th></tr></thead><tbody></tbody></table>
+
+<script>
+async function cargarProveedores(){
+  const res = await fetch('/api/v1/proveedores/');
+  const data = await res.json();
+  const tbody = document.querySelector('#tblProveedores tbody');
+  tbody.innerHTML = '';
+  data.forEach(p => {
+    tbody.innerHTML += `<tr><td>${p.id_proveedor}</td> <td>${p.nombre}</td><td>${p.razon_social}</td><td>${p.cuit}</td><td>${p.email || ''}</td></tr>`;
+  });
+}
+
+
+
+document.getElementById('formProveedor').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const body = Object.fromEntries(fd.entries());
+  await fetch('/api/v1/proveedores/', {
+    method: 'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  e.target.reset();
+  cargarProveedores();
+});
+
+
+
+const buscadorProveedor = document.getElementById('buscadorProveedor');
+const sugerenciasProveedores = document.getElementById('sugerenciasProveedores');
+
+buscadorProveedor.addEventListener('input', async () => {
+  const q = buscadorProveedor.value.trim();
+  sugerenciasProveedores.innerHTML = '';
+  delete buscadorProveedor.dataset.id;
+
+  if (q.length < 2) return;
+
+  const res = await fetch(
+    `/api/v1/proveedores/buscar?q=${encodeURIComponent(q)}`
+  );
+  const data = await res.json();
+
+  data.forEach(p => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'list-group-item list-group-item-action';
+    item.textContent = p.nombre;
+
+    item.onclick = () => {
+      buscadorProveedor.value = p.nombre;
+      buscadorProveedor.dataset.id = p.id_proveedor;
+      sugerenciasProveedores.innerHTML = '';
+    };
+
+    sugerenciasProveedores.appendChild(item);
+  });
+});
+
+
+
+async function buscarProveedor() {
+  const id = buscadorProveedor.dataset.id;
+
+  if (!id) {
+    alert('Seleccione un proveedor de la lista');
+    return;
+  }
+
+  const res = await fetch('/api/v1/proveedores/');
+  const data = await res.json();
+  const proveedor = data.find(p => p.id_proveedor == id);
+
+  if (!proveedor) {
+    alert('Proveedor no encontrado');
+    return;
+  }
+
+  const tbody = document.querySelector('#tblProveedores tbody');
+  tbody.innerHTML = `
+    <tr>
+      <td>${proveedor.id_proveedor}</td>
+      <td>${proveedor.nombre}</td>
+      <td>${proveedor.razon_social}</td>
+      <td>${proveedor.cuit}</td>
+      <td>${proveedor.email || ''}</td>
+    </tr>
+  `;
+}
+
+
+
+
+
+
+
+window.addEventListener('load', cargarProveedores);
+</script>
+{% endblock %}

@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Registrar Tanque Fabricado</h2>
+<form id="formTanque">
+  <div class="row g-2 mb-2">
+    <div class="col-md-4"><input class="form-control" name="modelo" placeholder="Modelo" required></div>
+    <div class="col-md-3"><input class="form-control" name="fecha" type="date"></div>
+    <div class="col-md-5"><input class="form-control" name="cliente" placeholder="Cliente"></div>
+  </div>
+
+  <h5>Insumos utilizados</h5>
+  <div id="insumosContainer"></div>
+  <button id="addInsumo" class="btn btn-sm btn-outline-secondary mb-2">Agregar insumo</button>
+  <div><button class="btn btn-success">Guardar Tanque</button></div>
+</form>
+
+<div class="row mb-3">
+  <div class="col-md-6 position-relative">
+    <input
+      type="text"
+      id="buscadorCliente"
+      class="form-control"
+      placeholder="Cliente..."
+      autocomplete="off"
+    >
+    <div id="sugerenciasClientes" class="list-group position-absolute w-100"></div>
+  </div>
+
+  <div class="col-md-3">
+    <button class="btn btn-primary w-100" onclick="buscarTanques()">
+      Buscar
+    </button>
+  </div>
+
+  <div class="col-md-3">
+    <button class="btn btn-secondary w-100" onclick="cargarTanques()">
+      Ver todos
+    </button>
+  </div>
+</div>
+
+
+
+
+<div id="msg"></div>
+
+<hr>
+<h4>Tanques Registrados</h4>
+<table class="table table-striped" id="tblTanques">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Modelo</th>
+      <th>Fecha</th>
+      <th>Cliente</th>
+      <th>Costo Total</th>
+      <th>Acción</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+
+<script>
+function agregarLinea(){
+  const container = document.getElementById('insumosContainer');
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.className = 'row g-2 mb-1';
+  div.innerHTML = `
+    <div class="col-md-3"><input class="form-control" name="id_insumo" placeholder="ID insumo" required></div>
+    <div class="col-md-3"><input class="form-control" name="cantidad_usada" type="number" step="0.01" placeholder="Cantidad usada" required></div>
+    <div class="col-md-3"><input class="form-control" name="costo_unitario" type="number" step="0.01" placeholder="Costo unitario" required></div>
+    <div class="col-md-3"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()">Quitar</button></div>
+  `;
+  container.appendChild(div);
+}
+document.getElementById('addInsumo').addEventListener('click', e=>{
+  e.preventDefault();
+  agregarLinea();
+});
+document.getElementById('formTanque').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const form = e.target;
+  const entries = new FormData(form);
+  const base = {
+    modelo: entries.get('modelo'),
+    fecha: entries.get('fecha'),
+    cliente: entries.get('cliente'),
+    insumos: []
+  };
+  // recorrer grupos de insumos
+  const container = document.getElementById('insumosContainer');
+  for (const row of container.children){
+    const id_insumo = row.querySelector('input[name="id_insumo"]').value;
+    const cantidad_usada = parseFloat(row.querySelector('input[name="cantidad_usada"]').value);
+    const costo_unitario = parseFloat(row.querySelector('input[name="costo_unitario"]').value);
+    if (id_insumo) base.insumos.push({ id_insumo: parseInt(id_insumo), cantidad_usada, costo_unitario });
+  }
+  const res = await fetch('/api/v1/tanques/', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(base)
+  });
+  const data = await res.json();
+  document.getElementById('msg').innerText = res.ok ? 'Tanque registrado. Costo: ' + data.costo_total : 'Error';
+  form.reset(); document.getElementById('insumosContainer').innerHTML = '';
+});
+
+
+
+
+
+const buscador = document.getElementById('buscadorCliente');
+const sugerencias = document.getElementById('sugerenciasClientes');
+
+buscador.addEventListener('input', async () => {
+  const q = buscador.value.trim();
+  sugerencias.innerHTML = '';
+
+  if (q.length < 2) return;
+
+  const res = await fetch(`/api/v1/tanques/clientes?q=${encodeURIComponent(q)}`);
+  const clientes = await res.json();
+
+  clientes.forEach(c => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'list-group-item list-group-item-action';
+    item.textContent = c;
+    item.onclick = () => {
+      buscador.value = c;
+      sugerencias.innerHTML = '';
+    };
+    sugerencias.appendChild(item);
+  });
+});
+
+
+
+
+
+
+async function buscarTanques() {
+  const cliente = buscador.value.trim().toLowerCase();
+  if (!cliente) {
+    alert('Ingrese un cliente');
+    return;
+  }
+
+  const res = await fetch('/api/v1/tanques/');
+  const data = await res.json();
+  const tbody = document.querySelector('#tblTanques tbody');
+  tbody.innerHTML = '';
+
+  const filtrados = data.filter(
+    t => t.cliente && t.cliente.toLowerCase().includes(cliente)
+  );
+
+  if (filtrados.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="text-center">No se encontraron tanques</td>
+      </tr>
+    `;
+    return;
+  }
+
+  filtrados.forEach(t => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${t.id_tanque}</td>
+        <td>${t.modelo}</td>
+        <td>${t.fecha}</td>
+        <td>${t.cliente || '-'}</td>
+        <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
+        <td>
+          <span class="badge ${t.finalizado ? 'bg-success' : 'bg-warning'}">
+            ${t.finalizado ? 'Finalizado' : 'Pendiente'}
+          </span>
+        </td>
+        <td>
+          ${
+            t.finalizado
+              ? '-'
+              : `<button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>`
+          }
+        </td>
+      </tr>
+    `;
+  });
+}
+
+
+
+
+
+
+
+async function cargarTanques() {
+  const res = await fetch('/api/v1/tanques/');
+  const data = await res.json();
+  const tbody = document.querySelector('#tblTanques tbody');
+  tbody.innerHTML = '';
+  data.forEach(t => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${t.id_tanque}</td>
+        <td>${t.modelo}</td>
+        <td>${t.fecha}</td>
+        <td>${t.cliente || '-'}</td>
+        <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
+        <td>
+          <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">
+            Finalizar
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+async function finalizarTanque(id) {
+  if (!confirm('¿Desea finalizar este tanque y generar el PDF?')) return;
+
+  const res = await fetch(`/api/v1/tanques/${id}/finalizar`, { method: 'PUT' });
+  if (res.ok) {
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Tanque_${id}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+    cargarTanques();
+  } else {
+    const data = await res.json();
+    alert('⚠️ Error: ' + (data.error || 'No se pudo finalizar'));
+  }
+}
+
+
+
+
+
+
+
+window.addEventListener('load', cargarTanques);
+
+
+
+</script>
+{% endblock %}

@@ -1,0 +1,113 @@
+
+{% extends "base.html" %}
+{% block content %}
+
+<div class="text-center py-5">
+    <h1>Bienvenido al Sistema de Gestión de Insumos</h1>
+    <p class="lead">Administra insumos, proveedores, compras y calcula costos de tanques fabricados.</p>
+  </div>
+
+
+
+<h2 class="mb-4 text-center">📊 Dashboard de Insumos</h2>
+
+<div class="row text-center mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>🔴 Stock Crítico</h5>
+        <h2 id="cntCritico" class="text-danger">0</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>🟡 Stock en Alerta</h5>
+        <h2 id="cntAlerta" class="text-warning">0</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>🟢 Stock OK</h5>
+        <h2 id="cntOk" class="text-success">0</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<h4>📋 Detalle de Insumos</h4>
+
+<table class="table table-bordered align-middle">
+  <thead class="table-light">
+    <tr>
+      <th>Insumo</th>
+      <th>Cantidad</th>
+      <th>Stock mínimo</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody id="tablaDashboard"></tbody>
+</table>
+
+<script>
+async function cargarDashboard() {
+  const res = await fetch('/api/v1/insumos/');
+  if (!res.ok) return;
+
+  const insumos = await res.json();
+
+  let critico = 0;
+  let alerta = 0;
+  let ok = 0;
+
+  const tbody = document.getElementById('tablaDashboard');
+  tbody.innerHTML = '';
+
+  insumos.forEach(i => {
+    const cantidad = parseFloat(i.cantidad);
+    const minimo = parseFloat(i.stock_minimo);
+
+    let estado = '';
+    let clase = '';
+
+    if (cantidad < minimo) {
+      estado = 'Crítico';
+      clase = 'text-danger';
+      critico++;
+    } else if (cantidad <= minimo * 1.2) {
+      estado = 'Alerta';
+      clase = 'text-warning';
+      alerta++;
+    } else {
+      estado = 'OK';
+      clase = 'text-success';
+      ok++;
+    }
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${i.nombre}</td>
+        <td>${cantidad}</td>
+        <td>${minimo}</td>
+        <td class="${clase}">
+          <span style="font-size:1.5rem;">●</span> ${estado}
+        </td>
+      </tr>`;
+  });
+
+  document.getElementById('cntCritico').textContent = critico;
+  document.getElementById('cntAlerta').textContent = alerta;
+  document.getElementById('cntOk').textContent = ok;
+}
+
+window.addEventListener('load', cargarDashboard);
+</script>
+
+{% endblock %}

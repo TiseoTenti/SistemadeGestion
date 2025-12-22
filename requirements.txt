@@ -1,0 +1,9 @@
+Flask
+Flask-Login
+Flask-WTF
+Flask-SQLAlchemy
+SQLAlchemy
+WTForms
+Werkzeug
+reportlab
+waitress
