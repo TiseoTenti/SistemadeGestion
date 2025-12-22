@@ -2,17 +2,16 @@
 
 Aplicación web desarrollada con Flask para la gestión de inventario,salida de insumos de pañol, costo de tanques y alertas de stock.
 
-Se le agrego la funcion de agregar las compras para gestionar las compras y agregarlo al inventario
+Se le agrego la funcion de agregar al inventario las compras realizadas para mejorar la gestion y mantener precios actualizados, con un historial de compras, para generar reportes y estimar metricas desde la documentacion de los movimientos realizados
 
-El proyecto está pensado para fines de prueba y de testing, e incluye una base de datos SQLite con datos de prueba para facilitar su evaluación y navegación.
+El proyecto está pensado para implementarse  de prueba y de testing, ademas incluye una base de datos SQLite con datos de prueba para facilitar su evaluación y navegación.
 
----
 
 ## Requisitos
 
 - Python 3.11.9
 
----
+
 # Credenciales de prueba
 
 - Usuario: admin

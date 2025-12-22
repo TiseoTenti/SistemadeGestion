@@ -5,6 +5,7 @@ from forms import LoginForm
 
 api_user = Blueprint('api_user', __name__, url_prefix='/user')
 
+
 # -------- LOGIN --------
 @api_user.route('/login', methods=['GET', 'POST'])
 def login():
@@ -27,6 +28,7 @@ def logout():
     flash('Sesión cerrada', 'success')
     return redirect(url_for('api_user.login'))
 
+
 # -------- CREAR NUEVO USUARIO --------
 @api_user.route('/new', methods=['GET', 'POST'])
 @login_required
@@ -39,14 +41,27 @@ def user_new():
         username = request.form.get('username')
         password = request.form.get('password')
         role = request.form.get('role')
-        if username and password and role:
-            u = User(username=username, role=role)
-            u.set_password(password)
-            db.session.add(u)
-            db.session.commit()
-            flash('Usuario creado', 'success')
+
+        if not username or not password or not role:
+            flash('Faltan datos', 'danger')
             return redirect(url_for('api_user.user_new'))
-        flash('Faltan datos', 'danger')
+
+        # 🔍 Verificar si el usuario ya existe
+        usuario_existente = User.query.filter_by(username=username).first()
+        if usuario_existente:
+            flash('El nombre de usuario ya existe', 'warning')
+            return redirect(url_for('api_user.user_new'))
+
+        # ✅ Crear usuario
+        u = User(username=username, role=role)
+        u.set_password(password)
+        db.session.add(u)
+        db.session.commit()
+
+        flash('✅Usuario creado correctamente!', 'success')
+        return redirect(url_for('api_user.user_new'))
 
     users = User.query.all()
     return render_template('user.html', users=users)
+
+
