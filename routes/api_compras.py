@@ -42,6 +42,7 @@ def buscar_compras_por_insumo():
 
 
 
+
 @compras_bp.route('/<int:id_compra>/revisar', methods=['PUT'])
 def marcar_revisado(id_compra):
     compra = Compra.query.get_or_404(id_compra)
@@ -96,12 +97,20 @@ def crear_compra():
     db.session.commit()
     return jsonify(compra.to_dict()), 201
 
-
-
-@compras_bp.route('/proveedor/<int:id_proveedor>', methods=['GET'])
-def compras_por_proveedor(id_proveedor):
-    compras = Compra.query.filter_by(id_proveedor=id_proveedor).all()
+@compras_bp.route('/proveedor/<string:nombre>', methods=['GET'])
+def compras_por_proveedor(nombre):
+    compras = (
+        db.session.query(Compra)
+        .join(Proveedor)
+        .filter(Proveedor.razon_social.ilike(f"%{nombre}%"))
+        .all()
+    )
     return jsonify([c.to_dict() for c in compras])
+
+
+
+
+
 
 @compras_bp.route('/insumo/<int:id_insumo>', methods=['GET'])
 def compras_por_insumo(id_insumo):

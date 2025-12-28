@@ -5,6 +5,7 @@ from models import db, Insumo, AlertaStock
 insumos_bp = Blueprint('insumos_bp', __name__, url_prefix='/api/v1/insumos')
 
 
+
 @insumos_bp.route('/buscar', methods=['GET'])
 def buscar_insumos():
     q = request.args.get('q', '').strip()
@@ -40,14 +41,11 @@ def obtener_insumo(id_insumo):
 
 
 
-
-
-
 @insumos_bp.route('/', methods=['POST'])
 def crear_insumo():
     data = request.json
     nuevo = Insumo(
-        codigo=data['codigo'],
+        codigo=data.get('codigo', ''),  # Si no viene, será ''
         nombre=data['nombre'],
         cantidad=data.get('cantidad', 0),
         unidad_medida=data['unidad_medida'],
@@ -57,11 +55,15 @@ def crear_insumo():
     db.session.commit()
     return jsonify(nuevo.to_dict()), 201
 
+
+
+
+
 @insumos_bp.route('/<int:id_insumo>', methods=['PUT'])
 def actualizar_insumo(id_insumo):
     insumo = Insumo.query.get_or_404(id_insumo)
     data = request.json
-    for campo in ['codigo','nombre','cantidad','unidad_medida','stock_minimo']:
+    for campo in ['nombre','cantidad','unidad_medida','stock_minimo']:
         if campo in data:
             setattr(insumo, campo, data[campo])
     db.session.commit()

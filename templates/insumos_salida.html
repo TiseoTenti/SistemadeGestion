@@ -18,9 +18,14 @@
           <label class="form-label">Cantidad usada</label>
           <input class="form-control" type="number" name="cantidad_usada" step="0.01" min="0" required>
         </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-primary w-100">Registrar Salida</button>
+        <div class="col-md-2">
+          <label class="form-label">Operario</label>
+          <input type="text" class="form-control" name="operario" required>
         </div>
+        <div class="col-md-2 d-flex align-items-end">
+           <button class="btn btn-primary w-100">Registrar Salida</button>
+        </div>
+
       </div>
     </form>
   </div>
@@ -36,6 +41,7 @@
       <th>Cantidad Usada</th>
       <th>Costo Unitario</th>
       <th>Subtotal</th>
+      <th>Operario</th>
       <th>Fecha</th>
       <th>Acciones</th>
     </tr>
@@ -81,11 +87,12 @@ async function cargarSalidas() {
   data.forEach(r => {
     tbody.innerHTML += `<tr>
       <td>${r.id_tanque_insumo}</td>
-      <td>${r.id_tanque}</td>
-      <td>${r.id_insumo}</td>
+      <td>${r.tanque_nombre}</td>
+      <td>${r.insumo_nombre}</td>
       <td>${r.cantidad_usada}</td>
       <td>$${r.costo_unitario.toFixed(2)}</td>
       <td>$${(r.cantidad_usada * r.costo_unitario).toFixed(2)}</td>
+      <td>${r.operario || '-'}</td>
       <td>${r.fecha_registro ? new Date(r.fecha_registro).toLocaleString() : '-'}</td>
       
       <td><button class="btn btn-sm btn-warning" onclick="editarSalida(${r.id_tanque_insumo})">Editar</button><button class="btn btn-sm btn-danger"onclick="eliminarSalida(${r.id_tanque_insumo})">Eliminar </button> </td>

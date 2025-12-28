@@ -3,9 +3,9 @@
 <h2>Registrar Tanque Fabricado</h2>
 <form id="formTanque">
   <div class="row g-2 mb-2">
-    <div class="col-md-4"><input class="form-control" name="modelo" placeholder="Modelo" required></div>
-    <div class="col-md-3"><input class="form-control" name="fecha" type="date"></div>
     <div class="col-md-5"><input class="form-control" name="cliente" placeholder="Cliente"></div>
+    <div class="col-md-3"><input class="form-control" name="fecha" type="date"></div>
+    <div class="col-md-4"><input class="form-control" name="modelo" placeholder="Modelo" required></div>
   </div>
 
   <h5>Insumos utilizados</h5>
@@ -50,9 +50,9 @@
   <thead>
     <tr>
       <th>ID</th>
-      <th>Modelo</th>
-      <th>Fecha</th>
       <th>Cliente</th>
+      <th>Fecha</th>
+      <th>Modelo</th>
       <th>Costo Total</th>
       <th>Acción</th>
     </tr>
@@ -170,9 +170,9 @@ async function buscarTanques() {
     tbody.innerHTML += `
       <tr>
         <td>${t.id_tanque}</td>
-        <td>${t.modelo}</td>
-        <td>${t.fecha}</td>
         <td>${t.cliente || '-'}</td>
+        <td>${t.fecha}</td>
+        <td>${t.modelo}</td>
         <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
         <td>
           <span class="badge ${t.finalizado ? 'bg-success' : 'bg-warning'}">
@@ -206,9 +206,9 @@ async function cargarTanques() {
     tbody.innerHTML += `
       <tr>
         <td>${t.id_tanque}</td>
-        <td>${t.modelo}</td>
-        <td>${t.fecha}</td>
         <td>${t.cliente || '-'}</td>
+        <td>${t.fecha}</td>
+        <td>${t.modelo}</td>
         <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
         <td>
           <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">

@@ -18,6 +18,11 @@ def registrar_salida():
     id_insumo = data.get('id_insumo')
     id_tanque = data.get('id_tanque')
     cantidad_usada = float(data.get('cantidad_usada', 0))
+   # operario = data.get('operario')
+
+   # if not operario:
+   #     return jsonify({"error": "Debe indicar el operario"}), 400
+
 
     # Validaciones básicas
     if not id_insumo or not id_tanque or cantidad_usada <= 0:
@@ -46,6 +51,7 @@ def registrar_salida():
         id_insumo=id_insumo,
         cantidad_usada=cantidad_usada,
         costo_unitario=costo_unitario,
+       # operario=operario
        # fecha_registro=datetime.utcnow()  
     )
     db.session.add(registro)
@@ -120,8 +126,26 @@ def eliminar_salida(id_tanque_insumo):
 @insumos_salida_bp.route('/', methods=['GET'])
 def listar_salidas():
     registros = TanqueInsumo.query.all()
-    resultado = [r.to_dict() for r in registros]
+    resultado = []
+
+    for r in registros:
+        tanque = TanqueFabricado.query.get(r.id_tanque)
+        insumo = Insumo.query.get(r.id_insumo)
+
+        resultado.append({
+            "id_tanque_insumo": r.id_tanque_insumo,
+            "id_tanque": r.id_tanque,
+            "tanque_nombre": tanque.modelo if tanque else "N/A",
+            "id_insumo": r.id_insumo,
+            "insumo_nombre": insumo.nombre if insumo else "N/A",
+            "cantidad_usada": float(r.cantidad_usada),
+            "costo_unitario": float(r.costo_unitario),
+          #  "operario": r.operario,
+           # "fecha_registro": r.fecha_registro.isoformat() if r.fecha_registro else None
+        })
+
     return jsonify(resultado), 200
+
 
 #    registros = TanqueInsumo.query.all()
 #    resultado = []

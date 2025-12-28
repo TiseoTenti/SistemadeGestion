@@ -11,6 +11,7 @@ db = SQLAlchemy()
 class Insumo(db.Model):
     __tablename__ = 'insumos'
     id_insumo = db.Column(db.Integer, primary_key=True)
+    #sacar el campo codigo
     codigo = db.Column(db.String(50), unique=True, nullable=False)
     nombre = db.Column(db.String(100), nullable=False)
     cantidad = db.Column(db.Numeric(10,2), default=0)
@@ -25,6 +26,7 @@ class Insumo(db.Model):
     def to_dict(self):
         return {
             'id_insumo': self.id_insumo,
+            # Sacar codigo el campo codigo
             'codigo': self.codigo,
             'nombre': self.nombre,
             'cantidad': float(self.cantidad),
@@ -36,9 +38,10 @@ class Insumo(db.Model):
 class Proveedor(db.Model):
     __tablename__ = 'proveedores'
     id_proveedor = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)  # 👈 Nuevo campo
+    nombre = db.Column(db.String(100), nullable=False) 
     razon_social = db.Column(db.String(100))
-    cuit = db.Column(db.String(20), unique=True, nullable=False)
+    #puede existir cuit pot duplicado
+    cuit = db.Column(db.String(20), nullable=False)
     direccion = db.Column(db.String(150))
     telefono = db.Column(db.String(20))
     email = db.Column(db.String(100))
@@ -49,7 +52,7 @@ class Proveedor(db.Model):
     def to_dict(self):
         return {
             'id_proveedor': self.id_proveedor,
-            'nombre': self.nombre,  # 👈 agregado
+            'nombre': self.nombre, 
             'razon_social': self.razon_social,
             'cuit': self.cuit,
             'direccion': self.direccion,
@@ -106,6 +109,8 @@ class Compra(db.Model):
     cantidad = db.Column(db.Numeric(10,2), nullable=False)
     precio_unitario = db.Column(db.Numeric(10,2), nullable=False)
     total = db.Column(db.Numeric(12,2), nullable=False)
+    # agregar columna revisado
+    #revisado = db.Column(db.Boolean, default=False)  # <-- Nueva columna
 
     def to_dict(self):
         return {
@@ -117,7 +122,8 @@ class Compra(db.Model):
             'insumo': self.insumo.nombre if self.insumo else None,
             'cantidad': float(self.cantidad),
             'precio_unitario': float(self.precio_unitario),
-            'total': float(self.total)
+            'total': float(self.total),
+            #'revisado': self.revisado  # <-- Se agrega para el front
         }
 
 # ---------- Tanques_Fabricados ----------
@@ -159,7 +165,8 @@ class TanqueInsumo(db.Model):
     id_insumo = db.Column(db.Integer, db.ForeignKey('insumos.id_insumo'), nullable=False)
     cantidad_usada = db.Column(db.Numeric(10,2), nullable=False)
     costo_unitario = db.Column(db.Numeric(10,2), nullable=False)
-  #  fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)  
+#   operario = db.Column(db.String(100))  # 👈 NUEVO
+#   fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)  
     
 
     def to_dict(self):
@@ -169,6 +176,8 @@ class TanqueInsumo(db.Model):
             'id_insumo': self.id_insumo,
             'cantidad_usada': float(self.cantidad_usada),
             'costo_unitario': float(self.costo_unitario),
+         #  'operario': self.operario,
+         
          #   'editable': not self.tanque.finalizado  # <- indicamos si se puede modificar
         }
 

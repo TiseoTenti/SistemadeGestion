@@ -55,6 +55,24 @@
   </div>
 </div>
 
+<div class="row mb-3">
+  <div class="col-md-4">
+    <input
+      list="proveedoresLista"
+      id="buscarProveedor"
+      class="form-control"
+      placeholder="Buscar por proveedor"
+    >
+    <datalist id="proveedoresLista"></datalist>
+  </div>
+
+  <div class="col-md-2">
+    <button class="btn btn-secondary w-100" onclick="buscarPorProveedor()">
+      Buscar proveedor
+    </button>
+  </div>
+</div>
+
 
 
 <hr>
@@ -237,6 +255,33 @@ async function buscarHistorial() {
 
 
 
+async function cargarProveedoresBusqueda() {
+  const res = await fetch('/api/v1/proveedores/');
+  if (!res.ok) return;
+
+  const data = await res.json();
+  const datalist = document.getElementById('proveedoresLista');
+  datalist.innerHTML = '';
+
+  data.forEach(p => {
+    datalist.innerHTML += `
+      <option value="${p.razon_social}"></option>
+    `;
+  });
+}
+
+
+async function buscarPorProveedor() {
+  const nombre = document.getElementById('buscarProveedor').value.trim();
+  if (!nombre) return;
+
+  const res = await fetch(`/api/v1/compras/proveedor/${encodeURIComponent(nombre)}`);
+  if (!res.ok) return;
+
+  const data = await res.json();
+  renderTablaCompras(data);
+}
+
 
 
 
@@ -315,6 +360,7 @@ window.addEventListener('load', async () => {
   await cargarInsumos();
   await cargarAutocompleteInsumos();
   await cargarHistorialCompras();
+  await cargarProveedoresBusqueda();
 });
 </script>
 {% endblock %}
