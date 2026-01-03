@@ -79,33 +79,57 @@ document.getElementById('addInsumo').addEventListener('click', e=>{
   e.preventDefault();
   agregarLinea();
 });
+
+
 document.getElementById('formTanque').addEventListener('submit', async e=>{
   e.preventDefault();
+
   const form = e.target;
   const entries = new FormData(form);
+
   const base = {
     modelo: entries.get('modelo'),
     fecha: entries.get('fecha'),
     cliente: entries.get('cliente'),
     insumos: []
   };
-  // recorrer grupos de insumos
+
   const container = document.getElementById('insumosContainer');
   for (const row of container.children){
     const id_insumo = row.querySelector('input[name="id_insumo"]').value;
     const cantidad_usada = parseFloat(row.querySelector('input[name="cantidad_usada"]').value);
     const costo_unitario = parseFloat(row.querySelector('input[name="costo_unitario"]').value);
-    if (id_insumo) base.insumos.push({ id_insumo: parseInt(id_insumo), cantidad_usada, costo_unitario });
+    if (id_insumo) {
+      base.insumos.push({
+        id_insumo: parseInt(id_insumo),
+        cantidad_usada,
+        costo_unitario
+      });
+    }
   }
+
   const res = await fetch('/api/v1/tanques/', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify(base)
   });
+
   const data = await res.json();
-  document.getElementById('msg').innerText = res.ok ? 'Tanque registrado. Costo: ' + data.costo_total : 'Error';
-  form.reset(); document.getElementById('insumosContainer').innerHTML = '';
+
+  if (res.ok) {
+    document.getElementById('msg').innerText =
+      'Tanque registrado. Costo: $' + data.costo_total.toFixed(2);
+
+    form.reset();
+    container.innerHTML = '';
+
+    // 🔴 ESTA ES LA CLAVE
+    cargarTanques();
+  } else {
+    document.getElementById('msg').innerText = 'Error al registrar tanque';
+  }
 });
+
 
 
 

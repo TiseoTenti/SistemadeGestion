@@ -46,7 +46,7 @@ def buscar_compras_por_insumo():
 @compras_bp.route('/<int:id_compra>/revisar', methods=['PUT'])
 def marcar_revisado(id_compra):
     compra = Compra.query.get_or_404(id_compra)
-   # compra.revisado = True
+    compra.revisado = True
     db.session.commit()
     return jsonify({'message': 'Compra marcada como revisada'})
 

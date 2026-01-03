@@ -14,14 +14,14 @@ insumos_salida_bp = Blueprint('insumos_salida_bp', __name__, url_prefix='/api/v1
 @insumos_salida_bp.route('/', methods=['POST'])
 def registrar_salida():
     data = request.get_json()
-
+    
     id_insumo = data.get('id_insumo')
     id_tanque = data.get('id_tanque')
     cantidad_usada = float(data.get('cantidad_usada', 0))
-   # operario = data.get('operario')
+    operario = data.get('operario')
 
-   # if not operario:
-   #     return jsonify({"error": "Debe indicar el operario"}), 400
+    if not operario:
+        return jsonify({"error": "Debe indicar el operario"}), 400
 
 
     # Validaciones básicas
@@ -51,8 +51,8 @@ def registrar_salida():
         id_insumo=id_insumo,
         cantidad_usada=cantidad_usada,
         costo_unitario=costo_unitario,
-       # operario=operario
-       # fecha_registro=datetime.utcnow()  
+        operario=operario,
+        fecha_registro=datetime.utcnow()  
     )
     db.session.add(registro)
 
@@ -140,8 +140,8 @@ def listar_salidas():
             "insumo_nombre": insumo.nombre if insumo else "N/A",
             "cantidad_usada": float(r.cantidad_usada),
             "costo_unitario": float(r.costo_unitario),
-          #  "operario": r.operario,
-           # "fecha_registro": r.fecha_registro.isoformat() if r.fecha_registro else None
+            "operario": r.operario,
+            "fecha_registro": r.fecha_registro.isoformat() if r.fecha_registro else None
         })
 
     return jsonify(resultado), 200

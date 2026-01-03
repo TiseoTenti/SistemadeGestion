@@ -45,7 +45,6 @@ def obtener_insumo(id_insumo):
 def crear_insumo():
     data = request.json
     nuevo = Insumo(
-        codigo=data.get('codigo', ''),  # Si no viene, será ''
         nombre=data['nombre'],
         cantidad=data.get('cantidad', 0),
         unidad_medida=data['unidad_medida'],

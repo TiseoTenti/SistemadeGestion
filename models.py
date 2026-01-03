@@ -11,8 +11,6 @@ db = SQLAlchemy()
 class Insumo(db.Model):
     __tablename__ = 'insumos'
     id_insumo = db.Column(db.Integer, primary_key=True)
-    #sacar el campo codigo
-    codigo = db.Column(db.String(50), unique=True, nullable=False)
     nombre = db.Column(db.String(100), nullable=False)
     cantidad = db.Column(db.Numeric(10,2), default=0)
     unidad_medida = db.Column(db.String(20), nullable=False)
@@ -26,8 +24,6 @@ class Insumo(db.Model):
     def to_dict(self):
         return {
             'id_insumo': self.id_insumo,
-            # Sacar codigo el campo codigo
-            'codigo': self.codigo,
             'nombre': self.nombre,
             'cantidad': float(self.cantidad),
             'unidad_medida': self.unidad_medida,
@@ -45,7 +41,6 @@ class Proveedor(db.Model):
     direccion = db.Column(db.String(150))
     telefono = db.Column(db.String(20))
     email = db.Column(db.String(100))
-
     compras = db.relationship('Compra', backref='proveedor', lazy=True)
     proveedor_insumo = db.relationship('ProveedorInsumo', backref='proveedor', lazy=True)
 
@@ -78,7 +73,6 @@ class ProveedorInsumo(db.Model):
     id_proveedor = db.Column(db.Integer, db.ForeignKey('proveedores.id_proveedor'), nullable=False)
     id_insumo = db.Column(db.Integer, db.ForeignKey('insumos.id_insumo'), nullable=False)
     precio_actual = db.Column(db.Numeric(10,2), nullable=False)
-
     historial_precios = db.relationship('HistorialPrecio', backref='proveedor_insumo', lazy=True)
 
 # ---------- Historial_Precios ----------
@@ -88,7 +82,7 @@ class HistorialPrecio(db.Model):
     id_proveedor_insumo = db.Column(db.Integer, db.ForeignKey('proveedor_insumo.id_proveedor_insumo'), nullable=False)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
     precio = db.Column(db.Numeric(10,2), nullable=False)
-    #revisado = db.Column(db.Boolean, default=False)
+    revisado = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {
@@ -96,7 +90,7 @@ class HistorialPrecio(db.Model):
             'id_proveedor_insumo': self.id_proveedor_insumo,
             'fecha': self.fecha.strftime('%Y-%m-%d %H:%M:%S'),
             'precio': float(self.precio),
-           #'revisado': self.revisado,
+            'revisado': self.revisado,
         }
 
 # ---------- Compras ----------
@@ -109,8 +103,7 @@ class Compra(db.Model):
     cantidad = db.Column(db.Numeric(10,2), nullable=False)
     precio_unitario = db.Column(db.Numeric(10,2), nullable=False)
     total = db.Column(db.Numeric(12,2), nullable=False)
-    # agregar columna revisado
-    #revisado = db.Column(db.Boolean, default=False)  # <-- Nueva columna
+    revisado = db.Column(db.Boolean, default=False)  # <-- Nueva columna
 
     def to_dict(self):
         return {
@@ -123,7 +116,7 @@ class Compra(db.Model):
             'cantidad': float(self.cantidad),
             'precio_unitario': float(self.precio_unitario),
             'total': float(self.total),
-            #'revisado': self.revisado  # <-- Se agrega para el front
+            'revisado': self.revisado  # <-- Se agrega para el front
         }
 
 # ---------- Tanques_Fabricados ----------
@@ -134,9 +127,10 @@ class TanqueFabricado(db.Model):
     fecha = db.Column(db.Date, default=datetime.utcnow)
     cliente = db.Column(db.String(100))
     costo_total = db.Column(db.Numeric(12,2), default=0)
-   # finalizado = db.Column(db.Boolean, default=False)  # <- nuevo campo
-
+    finalizado = db.Column(db.Boolean, default=False)  # <- nuevo campo
     tanque_insumo = db.relationship('TanqueInsumo', backref='tanque', lazy=True)
+
+    
 
     def to_dict(self):
         return {
@@ -145,7 +139,7 @@ class TanqueFabricado(db.Model):
             'fecha': self.fecha.strftime('%Y-%m-%d'),
             'cliente': self.cliente,
             'costo_total': float(self.costo_total),
-          #  'finalizado': self.finalizado,
+            'finalizado': self.finalizado,
             'insumos_utilizados': [
                 {
                     'id_tanque_insumo': ti.id_tanque_insumo,
@@ -165,9 +159,10 @@ class TanqueInsumo(db.Model):
     id_insumo = db.Column(db.Integer, db.ForeignKey('insumos.id_insumo'), nullable=False)
     cantidad_usada = db.Column(db.Numeric(10,2), nullable=False)
     costo_unitario = db.Column(db.Numeric(10,2), nullable=False)
-#   operario = db.Column(db.String(100))  # 👈 NUEVO
-#   fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)  
+    operario = db.Column(db.String(100))  # 👈 NUEVO
+    fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)  
     
+
 
     def to_dict(self):
         return {
@@ -176,9 +171,9 @@ class TanqueInsumo(db.Model):
             'id_insumo': self.id_insumo,
             'cantidad_usada': float(self.cantidad_usada),
             'costo_unitario': float(self.costo_unitario),
-         #  'operario': self.operario,
-         
-         #   'editable': not self.tanque.finalizado  # <- indicamos si se puede modificar
+            'operario': self.operario,
+            'fecha_registro': self.fecha_registro.isoformat() if self.fecha_registro else None,
+            'editable': not self.tanque.finalizado  # <- indicamos si se puede modificar
         }
 
 # ---------- Alertas_Stock ----------
