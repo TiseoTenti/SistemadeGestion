@@ -57,56 +57,45 @@ async function cargarInsumos(){
   const tbody = document.querySelector('#tblInsumos tbody');
   tbody.innerHTML = '';
 
+  data.forEach(i => {
+    tbody.innerHTML += `
+      <tr id="row-${i.id_insumo}">
+        <td>${i.id_insumo}</td>
+        <td>${i.nombre}</td>
+        <td>${i.cantidad}</td>
+        <td>${i.unidad_medida}</td>
+        <td>${i.stock_minimo}</td>
+        <td>
+          <button class="btn btn-sm btn-warning" onclick="toggleEditar(${i.id_insumo})">Editar</button>
+        </td>
+      </tr>
 
-data.forEach(i => {
-  tbody.innerHTML += `
-  <tr id="row-${i.id_insumo}">
-    <td>${i.id_insumo}</td>
-    <td>${i.nombre}</td>
-    <td>${i.cantidad}</td>
-    <td>${i.unidad_medida}</td>
-    <td>${i.stock_minimo}</td>
-    <td>
-      <button class="btn btn-sm btn-warning" onclick="toggleEditar(${i.id_insumo})">
-        Editar
-      </button>
-    </td>
-  </tr>
+      <tr id="edit-${i.id_insumo}" class="d-none bg-light">
+        <td colspan="6">
+          <div class="row g-2">
+            <div class="col-md-3"><input class="form-control" id="nombre-${i.id_insumo}" value="${i.nombre}"></div>
+            <div class="col-md-2"><input class="form-control" type="number" step="0.01" id="cantidad-${i.id_insumo}" value="${i.cantidad}"></div>
+            <div class="col-md-2">
+              <select class="form-select" id="unidad-${i.id_insumo}">
+                <option ${i.unidad_medida=='litro'?'selected':''}>litro</option>
+                <option ${i.unidad_medida=='metro'?'selected':''}>metro</option>
+                <option ${i.unidad_medida=='kilo'?'selected':''}>kilo</option>
+                <option ${i.unidad_medida=='unidad'?'selected':''}>unidad</option>
+              </select>
+            </div>
+            <div class="col-md-2"><input class="form-control" type="number" step="0.01" id="stock-${i.id_insumo}" value="${i.stock_minimo}"></div>
+            <div class="col-md-3">
+              <button class="btn btn-success btn-sm" onclick="guardarEdicion(${i.id_insumo})">Guardar</button>
+              <button class="btn btn-secondary btn-sm" onclick="toggleEditar(${i.id_insumo})">Cancelar</button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+} // <-- Cierre correcto de cargarInsumos()
 
-  <tr id="edit-${i.id_insumo}" class="d-none bg-light">
-    <td colspan="6">
-      <div class="row g-2">
-        <div class="col-md-3">
-          <input class="form-control" id="nombre-${i.id_insumo}" value="${i.nombre}">
-        </div>
-        <div class="col-md-2">
-          <input class="form-control" type="number" step="0.01"
-                 id="cantidad-${i.id_insumo}" value="${i.cantidad}">
-        </div>
-        <div class="col-md-2">
-          <select class="form-select" id="unidad-${i.id_insumo}">
-            <option ${i.unidad_medida=='litro'?'selected':''}>litro</option>
-            <option ${i.unidad_medida=='metro'?'selected':''}>metro</option>
-            <option ${i.unidad_medida=='kilo'?'selected':''}>kilo</option>
-            <option ${i.unidad_medida=='unidad'?'selected':''}>unidad</option>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <input class="form-control" type="number" step="0.01"
-                 id="stock-${i.id_insumo}" value="${i.stock_minimo}">
-        </div>
-        <div class="col-md-3">
-          <button class="btn btn-success btn-sm"
-                  onclick="guardarEdicion(${i.id_insumo})">Guardar</button>
-          <button class="btn btn-secondary btn-sm"
-                  onclick="toggleEditar(${i.id_insumo})">Cancelar</button>
-        </div>
-      </div>
-    </td>
-  </tr>`;
-});
-
-
+// Funciones auxiliares
 function toggleEditar(id) {
   const fila = document.getElementById(`edit-${id}`);
   fila.classList.toggle('d-none');
@@ -135,8 +124,7 @@ async function guardarEdicion(id) {
   cargarInsumos();
 }
 
-
-
+// Buscador
 const buscadorInsumo = document.getElementById('buscadorInsumo');
 const sugerenciasInsumos = document.getElementById('sugerenciasInsumos');
 
@@ -166,16 +154,10 @@ buscadorInsumo.addEventListener('input', async () => {
   });
 });
 
-
-
-
+// Buscar y editar
 async function buscarInsumo() {
   const id = buscadorInsumo.dataset.id;
-
-  if (!id) {
-    alert('Seleccione un insumo de la lista');
-    return;
-  }
+  if (!id) { alert('Seleccione un insumo de la lista'); return; }
 
   const res = await fetch(`/api/v1/insumos/${id}`);
   const i = await res.json();
@@ -188,27 +170,14 @@ async function buscarInsumo() {
       <td>${i.cantidad}</td>
       <td>${i.unidad_medida}</td>
       <td>${i.stock_minimo}</td>
-      <td>
-        <button class="btn btn-sm btn-warning" onclick="editarInsumo(${i.id_insumo})">
-          Editar
-        </button>
-      </td>
+      <td><button class="btn btn-sm btn-warning" onclick="editarInsumo(${i.id_insumo})">Editar</button></td>
     </tr>
   `;
 }
 
-
-
-
-
-
 async function eliminarInsumo(id){
   if(!confirm('¿Eliminar este insumo?')) return;
-
-  await fetch(`/api/v1/insumos/${id}`, {
-    method: 'DELETE'
-  });
-
+  await fetch(`/api/v1/insumos/${id}`, { method: 'DELETE' });
   cargarInsumos();
 }
 
@@ -225,6 +194,7 @@ async function editarInsumo(id){
   form.dataset.editando = id;
 }
 
+// <-- Listener del formulario FUERA de cargarInsumos()
 document.getElementById('formInsumo').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const form = e.target;
@@ -254,7 +224,8 @@ document.getElementById('formInsumo').addEventListener('submit', async (e)=>{
   form.reset();
   cargarInsumos();
 });
-}
+
+// Cargar tabla al inicio
 window.addEventListener('load', cargarInsumos);
 </script>
 {% endblock %}

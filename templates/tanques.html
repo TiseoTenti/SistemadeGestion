@@ -243,26 +243,27 @@ async function cargarTanques() {
     `;
   });
 }
-
 async function finalizarTanque(id) {
-  if (!confirm('¿Desea finalizar este tanque y generar el PDF?')) return;
+    if (!confirm('¿Desea finalizar este tanque y generar el PDF?')) return;
 
-  const res = await fetch(`/api/v1/tanques/${id}/finalizar`, { method: 'PUT' });
-  if (res.ok) {
+    const res = await fetch(`/api/v1/tanques/${id}/finalizar`, { method: 'PUT' });
+    if (!res.ok) {
+        const data = await res.json();
+        return alert('⚠️ Error: ' + (data.error || 'No se pudo finalizar'));
+    }
+
+    // Descargar PDF
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Tanque_${id}.pdf`;
+    a.download = `Tanque_${id}_Finalizado.pdf`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     window.URL.revokeObjectURL(url);
+
     cargarTanques();
-  } else {
-    const data = await res.json();
-    alert('⚠️ Error: ' + (data.error || 'No se pudo finalizar'));
-  }
 }
 
 

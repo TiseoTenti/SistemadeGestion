@@ -8,6 +8,7 @@ from reportlab.pdfgen import canvas
 from flask import send_file
 import io
 
+
 tanques_bp = Blueprint('tanques_bp', __name__, url_prefix='/api/v1/tanques')
 
 @tanques_bp.route('/', methods=['GET'])
@@ -83,7 +84,6 @@ def buscar_clientes():
 
     return jsonify([c[0] for c in clientes if c[0]])
 
-
 @tanques_bp.route('/<int:id_tanque>/finalizar', methods=['PUT'])
 def finalizar_tanque(id_tanque):
     tanque = TanqueFabricado.query.get_or_404(id_tanque)
@@ -95,71 +95,70 @@ def finalizar_tanque(id_tanque):
     if not insumos:
         return jsonify({'error': 'El tanque no tiene insumos registrados'}), 400
 
-    # Calcular costo total
+    # Marcar como finalizado
     costo_total = sum(i.cantidad_usada * i.costo_unitario for i in insumos)
     tanque.costo_total = costo_total
-    # tanque.finalizado = True
+    tanque.finalizado = True
     db.session.commit()
 
-    # Generar PDF profesional con bordes
+    # Generar PDF en memoria
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
     pdf.setTitle(f"Tanque_{tanque.id_tanque}_Finalizado")
 
-    # Título
+    # Título e info
     pdf.setFont("Helvetica-Bold", 16)
     pdf.drawCentredString(width / 2, height - 50, f"Informe de Tanque Fabricado ID {tanque.id_tanque}")
-
-    # Información general
     pdf.setFont("Helvetica", 12)
     pdf.drawString(50, height - 80, f"Cliente: {tanque.cliente}")
     pdf.drawString(50, height - 95, f"Modelo: {tanque.modelo}")
     pdf.drawString(50, height - 110, f"Fecha: {tanque.fecha.strftime('%Y-%m-%d')}")
     pdf.drawString(50, height - 125, f"Costo Total: ${float(costo_total):.2f}")
 
-    # Tabla profesional
+    # Tabla
     y_start = height - 150
     row_height = 20
-    x_positions = [50, 100, 160, 320, 400, 480]  # columnas: fecha, cantidad, insumo, precio unitario, total, proveedor
+    x_positions = [50, 120, 220, 320, 400, 480]
     headers = ["Fecha", "Cantidad", "Insumo", "Precio Unitario", "Precio Total", "Proveedor"]
 
     def dibujar_fila(y, valores, bold=False):
         pdf.setFont("Helvetica-Bold" if bold else "Helvetica", 10)
         for i, val in enumerate(valores):
             pdf.drawString(x_positions[i] + 2, y + 5, str(val))
-        # Línea horizontal para bordes
         pdf.line(x_positions[0], y, x_positions[-1] + 80, y)
 
-    # Encabezado
     y = y_start
     dibujar_fila(y, headers, bold=True)
     y -= row_height
 
     for ti in tanque.tanque_insumo:
-        if y < 50:  # salto de página
+        if y < 80:
             pdf.showPage()
             y = height - 50
             dibujar_fila(y, headers, bold=True)
             y -= row_height
-        fecha = tanque.fecha.strftime('%Y-%m-%d')
+        fecha = tanque.fecha.strftime('%Y-%m-%d') if tanque.fecha else '-'
         cantidad = f"{float(ti.cantidad_usada):.2f}"
         insumo = ti.insumo.nombre
         precio_unitario = f"${float(ti.costo_unitario):.2f}"
         precio_total = f"${float(ti.cantidad_usada * ti.costo_unitario):.2f}"
-        proveedor_nombre = ti.insumo.proveedor_insumo[0].proveedor.razon_social if ti.insumo.proveedor_insumo else '-'
+        proveedor_nombre = (
+        ti.insumo.proveedor_insumo[0].proveedor.nombre
+        if ti.insumo.proveedor_insumo else '-'
+    )
+
         dibujar_fila(y, [fecha, cantidad, insumo, precio_unitario, precio_total, proveedor_nombre])
         y -= row_height
 
-    # Borde final de la tabla
     pdf.line(x_positions[0], y + row_height, x_positions[-1] + 80, y + row_height)
-
     pdf.showPage()
     pdf.save()
     buffer.seek(0)
 
-    # Guardar internamente
-    with open(f"Tanque_{tanque.id_tanque}_Finalizado.pdf", "wb") as f:
-        f.write(buffer.read())
-
-    return jsonify({'message': 'PDF profesional generado internamente', 'costo_total': float(costo_total)})
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f"Tanque_{tanque.id_tanque}_Finalizado.pdf",
+        mimetype='application/pdf'
+    )
