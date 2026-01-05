@@ -1,6 +1,6 @@
 import os
 from flask import Flask, render_template,redirect, url_for, request, flash
-from flask_login import LoginManager, login_required
+from flask_login import LoginManager, login_required, current_user 
 from models import db, User, Insumo, TanqueInsumo, TanqueFabricado
 from routes import register_blueprints  # Se registra api_user y demás blueprints
 
@@ -61,7 +61,8 @@ def create_app():
     @app.route('/compras')
     @login_required
     def pagina_compras():
-        return render_template('compras.html')
+        is_admin = getattr(current_user, 'role', 'user') == 'administrador'
+        return render_template('compras.html', current_user_is_admin=is_admin)
 
     @app.route('/tanques')
     @login_required

@@ -16,7 +16,7 @@ class Insumo(db.Model):
     unidad_medida = db.Column(db.String(20), nullable=False)
     stock_minimo = db.Column(db.Numeric(10,2), default=0)
 
-    compras = db.relationship('Compra', backref='insumo', lazy=True)
+    compras = db.relationship('Compra', back_populates='insumo', lazy=True)
     proveedor_insumo = db.relationship('ProveedorInsumo', backref='insumo', lazy=True)
     tanque_insumo = db.relationship('TanqueInsumo', backref='insumo', lazy=True)
     alertas = db.relationship('AlertaStock', backref='insumo', lazy=True)
@@ -41,7 +41,7 @@ class Proveedor(db.Model):
     direccion = db.Column(db.String(150))
     telefono = db.Column(db.String(20))
     email = db.Column(db.String(100))
-    compras = db.relationship('Compra', backref='proveedor', lazy=True)
+    compras = db.relationship('Compra', back_populates='proveedor', lazy=True)
     proveedor_insumo = db.relationship('ProveedorInsumo', backref='proveedor', lazy=True)
 
     def to_dict(self):
@@ -83,6 +83,7 @@ class HistorialPrecio(db.Model):
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
     precio = db.Column(db.Numeric(10,2), nullable=False)
     revisado = db.Column(db.Boolean, default=False)
+    confirmado = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {
@@ -91,6 +92,8 @@ class HistorialPrecio(db.Model):
             'fecha': self.fecha.strftime('%Y-%m-%d %H:%M:%S'),
             'precio': float(self.precio),
             'revisado': self.revisado,
+            'confirmado': self.confirmado
+
         }
 
 # ---------- Compras ----------
@@ -104,19 +107,26 @@ class Compra(db.Model):
     precio_unitario = db.Column(db.Numeric(10,2), nullable=False)
     total = db.Column(db.Numeric(12,2), nullable=False)
     revisado = db.Column(db.Boolean, default=False)  # <-- Nueva columna
+    confirmado = db.Column(db.Boolean, default=False)
+
+
+    proveedor = db.relationship('Proveedor', back_populates='compras')
+    insumo = db.relationship('Insumo', back_populates='compras')
 
     def to_dict(self):
         return {
             'id_compra': self.id_compra,
             'fecha': self.fecha.strftime('%Y-%m-%d'),
             'id_proveedor': self.id_proveedor,
-            'proveedor': self.proveedor.razon_social if self.proveedor else None,
+            'proveedor': self.proveedor.nombre if self.proveedor else None,
             'id_insumo': self.id_insumo,
             'insumo': self.insumo.nombre if self.insumo else None,
             'cantidad': float(self.cantidad),
             'precio_unitario': float(self.precio_unitario),
             'total': float(self.total),
-            'revisado': self.revisado  # <-- Se agrega para el front
+            'revisado': self.revisado,  # <-- Se agrega para el front
+            'confirmado': self.confirmado 
+
         }
 
 # ---------- Tanques_Fabricados ----------
