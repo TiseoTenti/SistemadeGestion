@@ -65,3 +65,20 @@ def asociar_insumo_proveedor(id_proveedor):
     db.session.add(pi)
     db.session.commit()
     return jsonify({'message': 'Asociación creada', 'id': pi.id_proveedor_insumo}), 201
+
+
+
+@proveedores_bp.route('/<int:id_proveedor>', methods=['PUT'])
+def actualizar_proveedor(id_proveedor):
+    proveedor = Proveedor.query.get_or_404(id_proveedor)
+    data = request.json
+
+    proveedor.nombre = data.get('nombre', proveedor.nombre)
+    proveedor.razon_social = data.get('razon_social', proveedor.razon_social)
+    proveedor.cuit = data.get('cuit', proveedor.cuit)
+    proveedor.direccion = data.get('direccion', proveedor.direccion)
+    proveedor.telefono = data.get('telefono', proveedor.telefono)
+    proveedor.email = data.get('email', proveedor.email)
+
+    db.session.commit()
+    return jsonify(proveedor.to_dict())

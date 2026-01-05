@@ -9,6 +9,26 @@
   </div>
 
   <h5>Insumos utilizados</h5>
+  <div id="modalInsumos" class="card mt-3" style="display:none;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Insumos del Tanque</span>
+    <button class="btn btn-sm btn-danger" onclick="cerrarModalInsumos()">Cerrar</button>
+  </div>
+  <div class="card-body">
+    <table class="table table-sm table-bordered">
+      <thead>
+        <tr>
+          <th>Insumo</th>
+          <th>Cantidad</th>
+          <th>Costo Unitario</th>
+          <th>Costo Total</th>
+        </tr>
+      </thead>
+      <tbody id="tblInsumosBody"></tbody>
+    </table>
+  </div>
+</div>
+
   <div id="insumosContainer"></div>
   <button id="addInsumo" class="btn btn-sm btn-outline-secondary mb-2">Agregar insumo</button>
   <div><button class="btn btn-success">Guardar Tanque</button></div>
@@ -161,6 +181,41 @@ buscador.addEventListener('input', async () => {
 });
 
 
+async function verInsumos(id_tanque) {
+    const res = await fetch(`/api/v1/insumos_salida/tanque/${id_tanque}`);
+    if (!res.ok) {
+        const data = await res.json();
+        return alert('⚠️ Error: ' + (data.error || 'No se pudieron cargar los insumos'));
+    }
+
+    const insumos = await res.json();
+    const tbody = document.getElementById('tblInsumosBody');
+    tbody.innerHTML = '';
+
+    if (insumos.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center">No hay insumos registrados</td></tr>`;
+    } else {
+        insumos.forEach(i => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${i.insumo_nombre || '-'}</td>
+                    <td>${parseFloat(i.cantidad_usada).toFixed(2)}</td>
+                    <td>$${parseFloat(i.costo_unitario).toFixed(2)}</td>
+                    <td>$${(parseFloat(i.cantidad_usada) * parseFloat(i.costo_unitario)).toFixed(2)}</td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById('modalInsumos').style.display = 'block';
+}
+
+function cerrarModalInsumos() {
+    document.getElementById('modalInsumos').style.display = 'none';
+}
+
+
+
 
 
 
@@ -203,11 +258,15 @@ async function buscarTanques() {
             ${t.finalizado ? 'Finalizado' : 'Pendiente'}
           </span>
         </td>
+        
         <td>
-          ${
-            t.finalizado
-              ? '-'
-              : `<button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>`
+         ${
+          t.finalizado
+          ? '-'
+          : `
+          <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>
+          <button class="btn btn-info btn-sm" onclick="verInsumos(${t.id_tanque})">Ver Insumos</button>
+          `
           }
         </td>
       </tr>

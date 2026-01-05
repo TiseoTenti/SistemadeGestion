@@ -3,6 +3,8 @@ from flask import Blueprint, request, jsonify
 from models import db, Compra, Proveedor, Insumo, ProveedorInsumo, HistorialPrecio, AlertaStock
 from datetime import datetime
 from decimal import Decimal
+from flask_login import current_user, login_required
+from flask import render_template
 
 compras_bp = Blueprint('compras_bp', __name__, url_prefix='/api/v1/compras')
 
@@ -38,6 +40,18 @@ def buscar_compras_por_insumo():
 
 
 
+@compras_bp.route('/<int:id_compra>/confirmar', methods=['PUT'])
+@login_required
+def confirmar_compra(id_compra):
+    compra = Compra.query.get_or_404(id_compra)
+
+    # Solo admin puede confirmar
+    if getattr(current_user, 'role', 'user') != 'administrador':
+        return jsonify({'error': 'No autorizado'}), 403
+
+    compra.confirmado = True
+    db.session.commit()
+    return jsonify({'message': 'Compra confirmada', 'id_compra': id_compra})
 
 
 
@@ -102,7 +116,7 @@ def compras_por_proveedor(nombre):
     compras = (
         db.session.query(Compra)
         .join(Proveedor)
-        .filter(Proveedor.razon_social.ilike(f"%{nombre}%"))
+        .filter(Proveedor.nombre.ilike(f"%{nombre}%"))
         .all()
     )
     return jsonify([c.to_dict() for c in compras])

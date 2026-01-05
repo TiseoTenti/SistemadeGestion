@@ -95,7 +95,11 @@ async function cargarSalidas() {
       <td>${r.operario || '-'}</td>
       <td>${r.fecha_registro ? new Date(r.fecha_registro).toLocaleString() : '-'}</td>
       
-      <td><button class="btn btn-sm btn-warning" onclick="editarSalida(${r.id_tanque_insumo})">Editar</button><button class="btn btn-sm btn-danger"onclick="eliminarSalida(${r.id_tanque_insumo})">Eliminar </button> </td>
+      <td>
+        <button class="btn btn-sm btn-warning" onclick="editarSalida(${r.id_tanque_insumo}, this)">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarSalida(${r.id_tanque_insumo})">Eliminar</button>
+      </td>
+
         
     </tr>`;
   });
@@ -131,9 +135,12 @@ async function editarSalida(id) {
   form.id_tanque.value = r.id_tanque;
   form.id_insumo.value = r.id_insumo;
   form.cantidad_usada.value = r.cantidad_usada;
+  form.operario.value = r.operario || '';
 
   form.dataset.editando = id;
 }
+
+
 
 
 // -----------------------------

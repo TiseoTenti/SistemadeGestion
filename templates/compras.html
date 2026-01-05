@@ -1,6 +1,14 @@
 {% extends "base.html" %} 
 {% block content %}
+
+<script>
+  const currentUserIsAdmin = JSON.parse('{{ current_user_is_admin | tojson }}');
+</script>
+
+
+
 <h2>Registrar Compra</h2>
+
 
 <form id="formCompra" class="mb-3">
   <div class="row g-2">
@@ -125,6 +133,10 @@
   </div>
 </div>
 
+
+
+
+
 <script>
 async function cargarHistorialCompras() {
   const res = await fetch('/api/v1/compras/');
@@ -160,6 +172,13 @@ function renderTablaCompras(data) {
                 onclick="marcarRevisado(${c.id_compra})">
                 Revisado
               </button>`}
+
+          ${c.confirmado
+          ? '<span class="badge bg-primary ms-2">Confirmado</span>'
+          : currentUserIsAdmin ? `<button class="btn btn-sm btn-primary ms-2"
+              onclick="marcarConfirmado(${c.id_compra})">
+              Confirmar
+            </button>` : ''}
         </td>
       </tr>`;
   });
@@ -179,6 +198,19 @@ async function cargarAutocompleteInsumos() {
 }
 
 
+async function marcarConfirmado(id) {
+  const res = await fetch(`/api/v1/compras/${id}/confirmar`, {
+    method: 'PUT'
+  });
+
+  if (res.ok) {
+    await cargarHistorialCompras();
+    alert('Compra confirmada correctamente');
+  } else {
+    const err = await res.json();
+    alert('Error al confirmar: ' + (err.error || 'Desconocido'));
+  }
+}
 
 
 
@@ -265,7 +297,7 @@ async function cargarProveedoresBusqueda() {
 
   data.forEach(p => {
     datalist.innerHTML += `
-      <option value="${p.razon_social}"></option>
+      <option value="${p.nombre}"></option>
     `;
   });
 }
@@ -302,8 +334,8 @@ async function marcarRevisado(id) {
 // Función para abrir modal y cargar valores
 function abrirModalEditar(id, cantidad, precio, fecha) {
   document.getElementById('id_compra').value = id;
-  document.getElementById('cantidad').value = cantidad;
-  document.getElementById('precio_unitario').value = precio;
+  document.getElementById('cantidad').value = parseFloat(cantidad).toFixed(2);
+  document.getElementById('precio_unitario').value = parseFloat(precio).toFixed(2);
   document.getElementById('fecha').value = fecha;
 
   const modalEl = document.getElementById('modalEditarCompra');
