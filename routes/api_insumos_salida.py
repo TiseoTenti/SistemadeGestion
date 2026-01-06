@@ -121,13 +121,19 @@ def eliminar_salida(id_tanque_insumo):
 
 # --------------------------------------------
 # GET /api/v1/insumos_salida/
-# Listar todas las salidas registradas
+# Listar todas las salidas registradas o filtrar por insumo
 # --------------------------------------------
 @insumos_salida_bp.route('/', methods=['GET'])
 def listar_salidas():
-    registros = TanqueInsumo.query.order_by(TanqueInsumo.id_tanque_insumo.desc()).all()
-    resultado = []
+    id_insumo = request.args.get('id_insumo', type=int)
 
+    if id_insumo:
+        registros = TanqueInsumo.query.filter_by(id_insumo=id_insumo)\
+                    .order_by(TanqueInsumo.id_tanque_insumo.desc()).all()
+    else:
+        registros = TanqueInsumo.query.order_by(TanqueInsumo.id_tanque_insumo.desc()).all()
+
+    resultado = []
     for r in registros:
         tanque = TanqueFabricado.query.get(r.id_tanque)
         insumo = Insumo.query.get(r.id_insumo)
@@ -145,6 +151,7 @@ def listar_salidas():
         })
 
     return jsonify(resultado), 200
+
 
 
 #    registros = TanqueInsumo.query.all()
