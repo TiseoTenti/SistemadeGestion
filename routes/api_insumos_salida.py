@@ -256,6 +256,22 @@ def actualizar_salida(id_tanque_insumo):
 @insumos_salida_bp.route('/tanque/<int:id_tanque>', methods=['GET'])
 def listar_por_tanque(id_tanque):
     registros = TanqueInsumo.query.filter_by(id_tanque=id_tanque).all()
+
     if not registros:
-        return jsonify({"mensaje": "No hay insumos asociados a este tanque"}), 404
-    return jsonify([r.to_dict() for r in registros]), 200
+        return jsonify([]), 200  # mejor que 404 para el frontend
+
+    resultado = []
+    for r in registros:
+        insumo = Insumo.query.get(r.id_insumo)
+
+        resultado.append({
+            "id_tanque_insumo": r.id_tanque_insumo,
+            "id_insumo": r.id_insumo,
+            "insumo_nombre": insumo.nombre if insumo else "N/A",
+            "cantidad_usada": float(r.cantidad_usada),
+            "costo_unitario": float(r.costo_unitario),
+            "operario": r.operario,
+            "fecha_registro": r.fecha_registro.isoformat() if r.fecha_registro else None
+        })
+
+    return jsonify(resultado), 200

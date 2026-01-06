@@ -12,17 +12,21 @@
 
 <form id="formCompra" class="mb-3">
   <div class="row g-2">
-    <div class="col-md-3">
-      <select class="form-select" name="id_proveedor" id="selectProveedor" required>
-        <option value="">Seleccionar proveedor</option>
-      </select>
+    <div class="col-md-2">
+      <div class="col-md-11"><input class="form-control" list="proveedoresLista" id="inputProveedor" placeholder="Buscar proveedor" required>
+      <datalist id="proveedoresLista"></datalist>
+      <input type="hidden" name="id_proveedor" id="id_proveedor">
+      </div>
+
     </div>
 
-  <div class="col-md-3">
-      <select class="form-select" name="id_insumo" id="selectInsumo" required>
-          <option value="">Seleccionar insumo</option>
-      </select>
-  </div>
+    <div class="col-md-2">
+      <div class="col-md-11"><input class="form-control" list="insumosLista" id="inputInsumo" placeholder="Buscar insumo" required>
+      <datalist id="insumosLista"></datalist>
+      <input type="hidden" name="id_insumo" id="id_insumo">
+    </div>
+
+   </div>
 
     <div class="col-md-2">
       <input class="form-control" name="cantidad" type="number" step="0.01" placeholder="Cantidad" required>
@@ -237,39 +241,57 @@ async function actualizarCompra(id_compra, nuevaCantidad, nuevoPrecio, nuevaFech
   }
 }
 
-async function cargarProveedores() {
+
+let proveedoresMap = {};
+
+async function cargarProveedoresAutocomplete() {
   const res = await fetch('/api/v1/proveedores/');
   if (!res.ok) return;
 
   const data = await res.json();
-  const select = document.getElementById('selectProveedor');
-
-  select.innerHTML = '<option value="">Seleccionar proveedor</option>';
+  const datalist = document.getElementById('proveedoresLista');
+  datalist.innerHTML = '';
+  proveedoresMap = {};
 
   data.forEach(p => {
-    select.innerHTML += `
-      <option value="${p.id_proveedor}">
-        ${p.nombre} - ${p.cuit}
-      </option>`;
+    const label = p.nombre;   // SOLO nombre, como pedís
+    proveedoresMap[label] = p.id_proveedor;
+    datalist.innerHTML += `<option value="${label}"></option>`;
   });
 }
 
-async function cargarInsumos() {
+document.getElementById('inputProveedor').addEventListener('change', e => {
+  const nombre = e.target.value;
+  document.getElementById('id_proveedor').value =
+    proveedoresMap[nombre] || '';
+});
+
+
+let insumosMap = {};
+
+async function cargarInsumosAutocomplete() {
   const res = await fetch('/api/v1/insumos/');
   if (!res.ok) return;
 
   const data = await res.json();
-  const select = document.getElementById('selectInsumo');
-
-  select.innerHTML = '<option value="">Seleccionar insumo</option>';
+  const datalist = document.getElementById('insumosLista');
+  datalist.innerHTML = '';
+  insumosMap = {};
 
   data.forEach(i => {
-    select.innerHTML += `
-      <option value="${i.id_insumo}">
-        ${i.nombre} (${i.unidad_medida})
-      </option>`;
+    const label = i.nombre;   // SOLO nombre del insumo
+    insumosMap[label] = i.id_insumo;
+    datalist.innerHTML += `<option value="${label}"></option>`;
   });
 }
+
+document.getElementById('inputInsumo').addEventListener('change', e => {
+  const nombre = e.target.value;
+  document.getElementById('id_insumo').value =
+    insumosMap[nombre] || '';
+});
+
+
 
 
 
@@ -388,8 +410,8 @@ document.getElementById('formCompra').addEventListener('submit', async e => {
 
 
 window.addEventListener('load', async () => {
-  await cargarProveedores();
-  await cargarInsumos();
+  await cargarProveedoresAutocomplete();
+  await cargarInsumosAutocomplete();
   await cargarAutocompleteInsumos();
   await cargarHistorialCompras();
   await cargarProveedoresBusqueda();

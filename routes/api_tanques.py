@@ -50,7 +50,7 @@ def crear_tanque():
         costo_total += cantidad_usada * costo_unitario
         # NOTA: según requisitos iniciales NO descontamos stock automáticamente al fabricar un tanque
         # si en el futuro querés descontar, descomentar la siguiente línea:
-        # insumo.cantidad = Decimal(insumo.cantidad) - cantidad_usada
+        insumo.cantidad = Decimal(insumo.cantidad) - cantidad_usada
 
     tanque.costo_total = costo_total
     db.session.commit()

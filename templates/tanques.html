@@ -9,12 +9,12 @@
   </div>
 
   <h5>Insumos utilizados</h5>
-  <div id="modalInsumos" class="card mt-3" style="display:none;">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <span>Insumos del Tanque</span>
-    <button class="btn btn-sm btn-danger" onclick="cerrarModalInsumos()">Cerrar</button>
-  </div>
-  <div class="card-body">
+    <div id="modalInsumos" class="card mt-3" style="display:none;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Insumos del Tanque</span>
+      <button class="btn btn-sm btn-danger" onclick="cerrarModalInsumos()">Cerrar</button>
+    </div>
+    <div class="card-body">
     <table class="table table-sm table-bordered">
       <thead>
         <tr>
@@ -26,13 +26,13 @@
       </thead>
       <tbody id="tblInsumosBody"></tbody>
     </table>
-  </div>
-</div>
+    </div>
+    </div>
 
   <div id="insumosContainer"></div>
   <button id="addInsumo" class="btn btn-sm btn-outline-secondary mb-2">Agregar insumo</button>
   <div><button class="btn btn-success">Guardar Tanque</button></div>
-</form>
+  </form>
 
 <div class="row mb-3">
   <div class="col-md-6 position-relative">
@@ -196,9 +196,12 @@ async function verInsumos(id_tanque) {
         tbody.innerHTML = `<tr><td colspan="4" class="text-center">No hay insumos registrados</td></tr>`;
     } else {
         insumos.forEach(i => {
+            // Buscar automáticamente un campo que contenga 'nombre' o similar
+            const nombreInsumo = i.insumo || i.insumo_nombre || i.desc || '-';
+
             tbody.innerHTML += `
                 <tr>
-                    <td>${i.insumo_nombre || '-'}</td>
+                    <td>${nombreInsumo}</td>
                     <td>${parseFloat(i.cantidad_usada).toFixed(2)}</td>
                     <td>$${parseFloat(i.costo_unitario).toFixed(2)}</td>
                     <td>$${(parseFloat(i.cantidad_usada) * parseFloat(i.costo_unitario)).toFixed(2)}</td>
@@ -209,6 +212,7 @@ async function verInsumos(id_tanque) {
 
     document.getElementById('modalInsumos').style.display = 'block';
 }
+
 
 function cerrarModalInsumos() {
     document.getElementById('modalInsumos').style.display = 'none';
@@ -253,21 +257,10 @@ async function buscarTanques() {
         <td>${t.fecha}</td>
         <td>${t.modelo}</td>
         <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
-        <td>
-          <span class="badge ${t.finalizado ? 'bg-success' : 'bg-warning'}">
-            ${t.finalizado ? 'Finalizado' : 'Pendiente'}
-          </span>
-        </td>
-        
-        <td>
-         ${
-          t.finalizado
-          ? '-'
-          : `
+        <td>${t.finalizado ? '-': `
           <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>
           <button class="btn btn-info btn-sm" onclick="verInsumos(${t.id_tanque})">Ver Insumos</button>
-          `
-          }
+          ` }
         </td>
       </tr>
     `;
@@ -294,9 +287,10 @@ async function cargarTanques() {
         <td>${t.modelo}</td>
         <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
         <td>
-          <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">
-            Finalizar
-          </button>
+          
+          <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>
+          <button class="btn btn-info btn-sm" onclick="verInsumos(${t.id_tanque})">Ver Insumos</button>
+        </td>
         </td>
       </tr>
     `;
