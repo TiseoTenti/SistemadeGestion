@@ -10,7 +10,7 @@ compras_bp = Blueprint('compras_bp', __name__, url_prefix='/api/v1/compras')
 
 @compras_bp.route('/', methods=['GET'])
 def listar_compras():
-    compras = Compra.query.order_by(Compra.fecha.desc()).all()
+    compras = Compra.query.order_by(Compra.id_compra.desc()).all()
     return jsonify([c.to_dict() for c in compras])
 
 
@@ -32,7 +32,7 @@ def buscar_compras_por_insumo():
         db.session.query(Compra)
         .join(Insumo)
         .filter(Insumo.nombre.ilike(f"%{nombre}%"))
-        .order_by(Compra.fecha.desc())
+        .order_by(Compra.id_compra.desc())
         .all()
     )
 
@@ -117,6 +117,7 @@ def compras_por_proveedor(nombre):
         db.session.query(Compra)
         .join(Proveedor)
         .filter(Proveedor.nombre.ilike(f"%{nombre}%"))
+        .order_by(Compra.id_compra.desc())
         .all()
     )
     return jsonify([c.to_dict() for c in compras])

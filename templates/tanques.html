@@ -11,7 +11,7 @@
   <h5>Insumos utilizados</h5>
     <div id="modalInsumos" class="card mt-3" style="display:none;">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <span>Insumos del Tanque</span>
+      <span id="tituloInsumosTanque">Insumos del Tanque</span>
       <button class="btn btn-sm btn-danger" onclick="cerrarModalInsumos()">Cerrar</button>
     </div>
     <div class="card-body">
@@ -179,9 +179,14 @@ buscador.addEventListener('input', async () => {
     sugerencias.appendChild(item);
   });
 });
+async function verInsumos(btn) {
+    const id_tanque = btn.dataset.id;
+    const modelo = btn.dataset.modelo;
 
+    // Mostrar el modelo en el modal
+    document.getElementById('tituloInsumosTanque').textContent =
+        `Insumos del tanque – Modelo ${modelo}`;
 
-async function verInsumos(id_tanque) {
     const res = await fetch(`/api/v1/insumos_salida/tanque/${id_tanque}`);
     if (!res.ok) {
         const data = await res.json();
@@ -196,9 +201,7 @@ async function verInsumos(id_tanque) {
         tbody.innerHTML = `<tr><td colspan="4" class="text-center">No hay insumos registrados</td></tr>`;
     } else {
         insumos.forEach(i => {
-            // Buscar automáticamente un campo que contenga 'nombre' o similar
-            const nombreInsumo = i.insumo || i.insumo_nombre || i.desc || '-';
-
+            const nombreInsumo = i.insumo_nombre || i.insumo || '-';
             tbody.innerHTML += `
                 <tr>
                     <td>${nombreInsumo}</td>
@@ -214,9 +217,14 @@ async function verInsumos(id_tanque) {
 }
 
 
+
+
 function cerrarModalInsumos() {
     document.getElementById('modalInsumos').style.display = 'none';
+    // Volvemos al título por defecto
+    document.getElementById('tituloInsumosTanque').textContent = 'Insumos del Tanque';
 }
+
 
 
 
@@ -259,7 +267,7 @@ async function buscarTanques() {
         <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
         <td>${t.finalizado ? '-': `
           <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>
-          <button class="btn btn-info btn-sm" onclick="verInsumos(${t.id_tanque})">Ver Insumos</button>
+          <button class="btn btn-info btn-sm" onclick="verInsumos(this)"  data-id="${t.id_tanque}"  data-modelo="${t.modelo || '-'}">Ver Insumos</button>
           ` }
         </td>
       </tr>
@@ -278,24 +286,33 @@ async function cargarTanques() {
   const data = await res.json();
   const tbody = document.querySelector('#tblTanques tbody');
   tbody.innerHTML = '';
+
   data.forEach(t => {
     tbody.innerHTML += `
       <tr>
         <td>${t.id_tanque}</td>
         <td>${t.cliente || '-'}</td>
         <td>${t.fecha}</td>
-        <td>${t.modelo}</td>
+        <td>${t.modelo || '-'}</td>
         <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
         <td>
-          
-          <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>
-          <button class="btn btn-info btn-sm" onclick="verInsumos(${t.id_tanque})">Ver Insumos</button>
-        </td>
+          <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">
+            Finalizar
+          </button>
+          <button class="btn btn-info btn-sm" 
+                  onclick="verInsumos(this)" 
+                  data-id="${t.id_tanque}" 
+                  data-modelo="${t.modelo || '-'}">
+            Ver Insumos
+          </button>
         </td>
       </tr>
     `;
   });
 }
+
+
+
 async function finalizarTanque(id) {
     if (!confirm('¿Desea finalizar este tanque y generar el PDF?')) return;
 
