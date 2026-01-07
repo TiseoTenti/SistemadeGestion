@@ -76,7 +76,7 @@
 // Cargar tanques fabricados
 // -----------------------------
 async function cargarTanques() {
-  const res = await fetch('/api/v1/tanques/');  // Ajustar si tiene otro prefijo
+  const res = await fetch('/api/v1/tanques/activos');  // <- endpoint solo de tanques activos
   const data = await res.json();
   const sel = document.getElementById('selTanque');
   sel.innerHTML = '<option value="">Seleccione un tanque</option>';
@@ -84,6 +84,7 @@ async function cargarTanques() {
     sel.innerHTML += `<option value="${t.id_tanque}">${t.modelo || 'Tanque'} (#${t.id_tanque})</option>`;
   });
 }
+
 
 // -----------------------------
 // Cargar insumos disponibles

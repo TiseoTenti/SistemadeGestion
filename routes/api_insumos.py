@@ -1,11 +1,12 @@
 # routes/api_insumos.py
 from flask import Blueprint, request, jsonify
 from models import db, Insumo, AlertaStock
+from flask_login import login_required, current_user
 
 insumos_bp = Blueprint('insumos_bp', __name__, url_prefix='/api/v1/insumos')
 
 
-
+# Esta ruta busca todos los inusmos
 @insumos_bp.route('/buscar', methods=['GET'])
 def buscar_insumos():
     q = request.args.get('q', '').strip()
@@ -26,12 +27,14 @@ def buscar_insumos():
 
 
 
-
+#Esta ruta lista todos los insumos
 @insumos_bp.route('/', methods=['GET'])
 def listar_insumos():
     insumos = Insumo.query.all()
     return jsonify([i.to_dict() for i in insumos])
 
+
+#Esta ruta es para buscar insumo por id
 @insumos_bp.route('/<int:id_insumo>', methods=['GET'])
 def obtener_insumo(id_insumo):
     insumo = Insumo.query.get_or_404(id_insumo)
@@ -40,7 +43,7 @@ def obtener_insumo(id_insumo):
 
 
 
-
+# Esta ruta es para crear un insumo
 @insumos_bp.route('/', methods=['POST'])
 def crear_insumo():
     data = request.json
@@ -56,17 +59,22 @@ def crear_insumo():
 
 
 
-
-
+# Esa ruta es para editar un insumo
 @insumos_bp.route('/<int:id_insumo>', methods=['PUT'])
+@login_required
 def actualizar_insumo(id_insumo):
+    if current_user.role != 'administrador':
+        return jsonify({'error': 'Solo el administrador puede editar insumos'}), 403
+
     insumo = Insumo.query.get_or_404(id_insumo)
     data = request.json
+
     for campo in ['nombre','cantidad','unidad_medida','stock_minimo']:
         if campo in data:
             setattr(insumo, campo, data[campo])
+
     db.session.commit()
-    # comprobar alerta
+
     if float(insumo.cantidad) < float(insumo.stock_minimo):
         alerta = AlertaStock(
             id_insumo=insumo.id_insumo,
@@ -75,10 +83,12 @@ def actualizar_insumo(id_insumo):
         )
         db.session.add(alerta)
         db.session.commit()
+
     return jsonify(insumo.to_dict())
 
 
 
+# Esta ruta es para relacionarla con las aletas de stock 
 @insumos_bp.route('/alertas', methods=['GET'])
 def listar_alertas():
     alertas = AlertaStock.query.filter_by(estado='Pendiente').all()

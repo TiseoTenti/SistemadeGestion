@@ -7,6 +7,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from flask import send_file
 import io
+from flask_login import login_required, current_user
+
 
 
 tanques_bp = Blueprint('tanques_bp', __name__, url_prefix='/api/v1/tanques')
@@ -15,6 +17,27 @@ tanques_bp = Blueprint('tanques_bp', __name__, url_prefix='/api/v1/tanques')
 def listar_tanques():
     tanques = TanqueFabricado.query.order_by(TanqueFabricado.fecha.desc()).all()
     return jsonify([t.to_dict() for t in tanques])
+
+
+# GET /api/v1/tanques/activos
+@tanques_bp.route('/activos', methods=['GET'])
+def listar_tanques_activos():
+    # Solo tanques que no estén finalizados
+    tanques = TanqueFabricado.query.filter_by(finalizado=False).all()
+    resultado = []
+    for t in tanques:
+        resultado.append({
+            "id_tanque": t.id_tanque,
+            "modelo": t.modelo,
+            "fecha": t.fecha.strftime('%Y-%m-%d'),
+            "cliente": t.cliente,
+            "costo_total": float(t.costo_total or 0),
+            "finalizado": t.finalizado
+        })
+    return jsonify(resultado), 200
+
+
+
 
 @tanques_bp.route('/', methods=['POST'])
 def crear_tanque():
@@ -85,7 +108,12 @@ def buscar_clientes():
     return jsonify([c[0] for c in clientes if c[0]])
 
 @tanques_bp.route('/<int:id_tanque>/finalizar', methods=['PUT'])
+@login_required
 def finalizar_tanque(id_tanque):
+
+    if current_user.role != 'administrador':
+        return jsonify({'error': 'Solo el administrador puede finalizar tanques'}), 403
+
     tanque = TanqueFabricado.query.get_or_404(id_tanque)
     
     if tanque.finalizado:

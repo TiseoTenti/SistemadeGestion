@@ -51,6 +51,11 @@
 </table>
 
 <script>
+
+
+// -----------------------------
+// Cargar insumos
+// -----------------------------
 async function cargarInsumos(){
   const res = await fetch('/api/v1/insumos/');
   const data = await res.json();
@@ -93,7 +98,8 @@ async function cargarInsumos(){
       </tr>
     `;
   });
-} // <-- Cierre correcto de cargarInsumos()
+} 
+
 
 // Funciones auxiliares
 function toggleEditar(id) {
@@ -101,6 +107,12 @@ function toggleEditar(id) {
   fila.classList.toggle('d-none');
 }
 
+
+
+
+// -----------------------------
+// Guardar la edicion de los insumos
+// -----------------------------
 async function guardarEdicion(id) {
   const body = {
     nombre: document.getElementById(`nombre-${id}`).value,
@@ -124,7 +136,11 @@ async function guardarEdicion(id) {
   cargarInsumos();
 }
 
+
+
+// -----------------------------
 // Buscador
+// -----------------------------
 const buscadorInsumo = document.getElementById('buscadorInsumo');
 const sugerenciasInsumos = document.getElementById('sugerenciasInsumos');
 
@@ -154,6 +170,8 @@ buscadorInsumo.addEventListener('input', async () => {
   });
 });
 
+
+
 // Buscar y editar
 async function buscarInsumo() {
   const id = buscadorInsumo.dataset.id;
@@ -175,11 +193,7 @@ async function buscarInsumo() {
   `;
 }
 
-async function eliminarInsumo(id){
-  if(!confirm('¿Eliminar este insumo?')) return;
-  await fetch(`/api/v1/insumos/${id}`, { method: 'DELETE' });
-  cargarInsumos();
-}
+
 
 async function editarInsumo(id){
   const res = await fetch(`/api/v1/insumos/${id}`);
