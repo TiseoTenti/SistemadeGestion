@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
+
+<script>
+  const currentUserIsAdmin = JSON.parse('{{ current_user_is_admin | tojson }}');
+</script>
+
+
 <h2>Registrar Salida de Insumos</h2>
 
 <div class="card mb-3">
@@ -40,11 +46,16 @@
 
 <div class="row mb-3">
   <div class="col-md-6 position-relative">
-    <input type="text" class="form-control" id="buscarInsumo" placeholder="Buscar por insumo..." autocomplete="off">
-    <div id="sugerenciasFiltro" class="list-group position-absolute w-100" style="z-index:1000;"></div>
+    <input type="text" class="form-control" id="buscarInsumo"
+           placeholder="Buscar por insumo..." autocomplete="off">
+    <div id="sugerenciasFiltro"
+         class="list-group position-absolute w-100"
+         style="z-index:1000;"></div>
     <input type="hidden" id="idInsumoFiltro">
   </div>
+
   <div class="col-md-6 d-flex gap-2">
+    <button class="btn btn-primary" id="btnBuscar">Buscar</button>
     <button class="btn btn-secondary" id="btnVerTodos">Ver todos</button>
   </div>
 </div>
@@ -81,23 +92,11 @@ async function cargarTanques() {
   const sel = document.getElementById('selTanque');
   sel.innerHTML = '<option value="">Seleccione un tanque</option>';
   data.forEach(t => {
-    sel.innerHTML += `<option value="${t.id_tanque}">${t.modelo || 'Tanque'} (#${t.id_tanque})</option>`;
+    sel.innerHTML += `<option value="${t.id_tanque}">${t.modelo || 'Tanque'} (${t.cliente_nombre || 'Cliente'})</option>`;
   });
 }
 
 
-// -----------------------------
-// Cargar insumos disponibles
-// -----------------------------
-async function cargarInsumos() {
-  const res = await fetch('/api/v1/insumos/');
-  const data = await res.json();
-  const sel = document.getElementById('selInsumo');
-  sel.innerHTML = '<option value="">Seleccione un insumo</option>';
-  data.forEach(i => {
-    sel.innerHTML += `<option value="${i.id_insumo}">${i.nombre} (Stock: ${i.cantidad})</option>`;
-  });
-}
 
 // -----------------------------
 // Cargar salidas registradas
@@ -119,8 +118,9 @@ async function cargarSalidas() {
       <td>${r.fecha_registro ? new Date(r.fecha_registro).toLocaleString() : '-'}</td>
       
       <td>
-        <button class="btn btn-sm btn-warning" onclick="editarSalida(${r.id_tanque_insumo}, this)">Editar</button>
+        <button class="btn btn-sm btn-warning" onclick="editarSalida(${r.id_tanque_insumo})">Editar</button>
         <button class="btn btn-sm btn-danger" onclick="eliminarSalida(${r.id_tanque_insumo})">Eliminar</button>
+
       </td>
 
         
@@ -128,40 +128,58 @@ async function cargarSalidas() {
   });
 }
 
-async function eliminarSalida(id) {
-  if (!confirm('¿Eliminar esta salida y revertir el stock?')) return;
 
-  const res = await fetch(`/api/v1/insumos_salida/${id}`, {
-    method: 'DELETE'
-  });
-
+// Cargar todas las salidas
+async function cargarSalidas() {
+  const res = await fetch('/api/v1/insumos_salida/');
   const data = await res.json();
-
-  if (res.ok) {
-    alert('✅ Salida eliminada y stock restaurado');
-    cargarInsumos();
-    cargarSalidas();
-  } else {
-    alert('⚠️ Error: ' + (data.error || 'No se pudo eliminar'));
-  }
+  mostrarSalidas(data);
 }
+
 
 
 
 async function editarSalida(id) {
-  const res = await fetch(`/api/v1/insumos_salida/${id}`);
-  if (!res.ok) return alert('No se pudo cargar la salida');
+    if (!currentUserIsAdmin) {
+        alert('⚠️ No tiene permisos para editar esta salida');
+        return;
+    }
 
-  const r = await res.json();
+    const res = await fetch(`/api/v1/insumos_salida/${id}`);
+    if (!res.ok) return alert('No se pudo cargar la salida');
 
-  const form = document.getElementById('formSalida');
-  form.id_tanque.value = r.id_tanque;
-  form.id_insumo.value = r.id_insumo;
-  form.cantidad_usada.value = r.cantidad_usada;
-  form.operario.value = r.operario || '';
+    const r = await res.json();
+    const form = document.getElementById('formSalida');
+    form.id_tanque.value = r.id_tanque;
+    form.id_insumo.value = r.id_insumo;
+    form.cantidad_usada.value = r.cantidad_usada;
+    form.operario.value = r.operario || '';
 
-  form.dataset.editando = id;
+    form.dataset.editando = id;
 }
+
+async function eliminarSalida(id) {
+    if (!currentUserIsAdmin) {
+        alert('⚠️ No tiene permisos para eliminar esta salida');
+        return;
+    }
+
+    if (!confirm('¿Eliminar esta salida y revertir el stock?')) return;
+
+    const res = await fetch(`/api/v1/insumos_salida/${id}`, {
+        method: 'DELETE'
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+        alert('✅ Salida eliminada y stock restaurado');
+        cargarSalidas();
+    } else {
+        alert('⚠️ Error: ' + (data.error || 'No se pudo eliminar'));
+    }
+}
+
 
 
 
@@ -201,12 +219,7 @@ async function mostrarSalidas(salidas) {
   });
 }
 
-// Cargar todas las salidas
-async function cargarSalidas() {
-  const res = await fetch('/api/v1/insumos_salida/');
-  const data = await res.json();
-  mostrarSalidas(data);
-}
+
 
 // ------------------------
 // Autocompletado y filtro
@@ -216,85 +229,99 @@ buscarInsumo.addEventListener('input', async () => {
   sugerenciasFiltro.innerHTML = '';
   idInsumoFiltro.value = '';
 
-  if (q.length < 2) {
-    cargarSalidas(); // si no hay texto, mostrar todo
-    return;
-  }
+  if (q.length < 2) return;
 
-  const res = await fetch(`/api/v1/insumos/?search=${encodeURIComponent(q)}`);
+  const res = await fetch(`/api/v1/insumos/buscar?q=${encodeURIComponent(q)}`);
+  if (!res.ok) return;
+
   const insumos = await res.json();
 
   insumos.forEach(i => {
-    const item = document.createElement('button');
-    item.type = 'button';
-    item.className = 'list-group-item list-group-item-action';
-    item.textContent = i.nombre;
-    item.onclick = async () => {
-      buscarInsumo.value = i.nombre;
-      idInsumoFiltro.value = i.id_insumo;
-      sugerenciasFiltro.innerHTML = '';
+  const item = document.createElement('button');
+  item.type = 'button';
+  item.className = 'list-group-item list-group-item-action';
+  item.textContent = `${i.nombre} (Stock: ${i.cantidad || 0})`;
 
-      // Filtrar tabla automáticamente
-      const resSalidas = await fetch(`/api/v1/insumos_salida/?id_insumo=${i.id_insumo}`);
-      const data = await resSalidas.json();
-      mostrarSalidas(data);
-    };
-    sugerenciasFiltro.appendChild(item);
-  });
+
+  item.onclick = () => {
+    inpInsumo.value = i.nombre;
+    idInsumo.value = i.id_insumo;
+    sugerenciasInsumos.innerHTML = '';
+  };
+
+  sugerenciasInsumos.appendChild(item);
 });
 
-// Cerrar sugerencias si clic fuera del input
-document.addEventListener('click', e => {
-  if (!buscarInsumo.contains(e.target) && !sugerenciasFiltro.contains(e.target)) {
-    sugerenciasFiltro.innerHTML = '';
+});
+
+
+// Boton buscar
+const btnBuscar = document.getElementById('btnBuscar');
+
+btnBuscar.addEventListener('click', async () => {
+  const idInsumo = idInsumoFiltro.value;
+
+  if (!idInsumo) {
+    alert('Seleccione un insumo de la lista');
+    return;
   }
+
+  const res = await fetch(`/api/v1/insumos_salida/?id_insumo=${idInsumo}`);
+  if (!res.ok) {
+    alert('Error al buscar salidas');
+    return;
+  }
+
+  const data = await res.json();
+  mostrarSalidas(data);
 });
+
+
 
 // Botón "Ver todos"
 btnVerTodos.addEventListener('click', () => {
-  idInsumoFiltro.value = '';
   buscarInsumo.value = '';
+  idInsumoFiltro.value = '';
+  sugerenciasFiltro.innerHTML = '';
   cargarSalidas();
 });
 
-// Inicializar tabla
-window.addEventListener('load', () => {
-  cargarSalidas();
-});
+
 
 
 
 
 
 // Autocompletado para registrar salida
-const inpInsumo = document.getElementById('inpInsumo');
-const sugerenciasInsumos = document.getElementById('sugerenciasInsumos');
-const idInsumo = document.getElementById('idInsumo');
-
 inpInsumo.addEventListener('input', async () => {
   const q = inpInsumo.value.trim();
   sugerenciasInsumos.innerHTML = '';
   idInsumo.value = '';
 
-  if (q.length < 2) return; // esperar al menos 2 caracteres
+  if (!q) return;
 
-  const res = await fetch(`/api/v1/insumos/?search=${encodeURIComponent(q)}`);
+
+  const res = await fetch(`/api/v1/insumos/buscar?q=${encodeURIComponent(q)}`);
   if (!res.ok) return;
+
   const insumos = await res.json();
 
   insumos.forEach(i => {
     const item = document.createElement('button');
     item.type = 'button';
     item.className = 'list-group-item list-group-item-action';
-    item.textContent = `${i.nombre} (Stock: ${i.cantidad})`;
+    item.textContent = `${i.nombre} (Stock: ${i.stock})`;
+
     item.onclick = () => {
       inpInsumo.value = i.nombre;
       idInsumo.value = i.id_insumo;
       sugerenciasInsumos.innerHTML = '';
     };
+
     sugerenciasInsumos.appendChild(item);
   });
 });
+
 
 // Cerrar sugerencias si clic fuera del input
 document.addEventListener('click', e => {
@@ -304,6 +331,11 @@ document.addEventListener('click', e => {
 });
 
 
+document.addEventListener('click', e => {
+  if (!buscarInsumo.contains(e.target) && !sugerenciasFiltro.contains(e.target)) {
+    sugerenciasFiltro.innerHTML = '';
+  }
+});
 
 
 
@@ -354,7 +386,7 @@ document.getElementById('formSalida').addEventListener('submit', async (e) => {
   }
 
   form.reset();
-  cargarInsumos();
+ 
   cargarSalidas();
 });
 
@@ -362,8 +394,8 @@ document.getElementById('formSalida').addEventListener('submit', async (e) => {
 // Inicializar
 window.addEventListener('load', () => {
   cargarTanques();
-  cargarInsumos();
   cargarSalidas();
 });
 </script>
 {% endblock %}
+

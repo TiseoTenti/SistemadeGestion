@@ -21,7 +21,8 @@ def buscar_insumos():
     return jsonify([
         {
             "id_insumo": i.id_insumo,
-            "nombre": i.nombre
+            "nombre": i.nombre,
+            "stock":i.cantidad,
         } for i in insumos
     ])
 

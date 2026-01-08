@@ -190,3 +190,22 @@ def finalizar_tanque(id_tanque):
         download_name=f"Tanque_{tanque.id_tanque}_Finalizado.pdf",
         mimetype='application/pdf'
     )
+
+
+
+@tanques_bp.route('/<int:id_tanque>/desfinalizar', methods=['PUT'])
+@login_required
+def desfinalizar_tanque(id_tanque):
+    # Solo administrador puede desfinalizar
+    if current_user.role != 'administrador':
+        return jsonify({'error': 'Solo el administrador puede desfinalizar tanques'}), 403
+
+    tanque = TanqueFabricado.query.get_or_404(id_tanque)
+
+    if not tanque.finalizado:
+        return jsonify({'error': 'El tanque ya no está finalizado'}), 400
+
+    tanque.finalizado = False
+    db.session.commit()
+
+    return jsonify({'ok': True, 'msg': 'Tanque desfinalizado correctamente'})

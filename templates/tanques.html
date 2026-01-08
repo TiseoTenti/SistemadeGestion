@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Registrar Tanque Fabricado</h2>
+<h2>Registrar Trabajo Fabricado</h2>
 <form id="formTanque">
   <div class="row g-2 mb-2">
     <div class="col-md-5"><input class="form-control" name="cliente" placeholder="Cliente"></div>
@@ -265,16 +265,18 @@ async function buscarTanques() {
         <td>${t.fecha}</td>
         <td>${t.modelo}</td>
         <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
-        <td>${t.finalizado ? '-': `
-          <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>
-          <button class="btn btn-info btn-sm" onclick="verInsumos(this)"  data-id="${t.id_tanque}"  data-modelo="${t.modelo || '-'}">Ver Insumos</button>
-          ` }
+        <td>
+          ${t.finalizado 
+          ? `<button class="btn btn-danger btn-sm" onclick="desfinalizarTanque(${t.id_tanque})">Desfinalizar</button>
+          <button class="btn btn-info btn-sm" onclick="verInsumos(this)"  data-id="${t.id_tanque}"  data-modelo="${t.modelo || '-'}">Ver Insumos</button>`
+          : `<button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>
+           <button class="btn btn-info btn-sm" onclick="verInsumos(this)"  data-id="${t.id_tanque}"  data-modelo="${t.modelo || '-'}">Ver Insumos</button>` }
         </td>
+
       </tr>
     `;
   });
 }
-
 
 
 
@@ -296,20 +298,18 @@ async function cargarTanques() {
         <td>${t.modelo || '-'}</td>
         <td>${t.costo_total ? '$' + t.costo_total.toFixed(2) : '-'}</td>
         <td>
-          <button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">
-            Finalizar
-          </button>
-          <button class="btn btn-info btn-sm" 
-                  onclick="verInsumos(this)" 
-                  data-id="${t.id_tanque}" 
-                  data-modelo="${t.modelo || '-'}">
-            Ver Insumos
-          </button>
+          ${t.finalizado 
+            ? `<button class="btn btn-danger btn-sm" onclick="desfinalizarTanque(${t.id_tanque})">Desfinalizar</button>
+               <button class="btn btn-info btn-sm" onclick="verInsumos(this)" data-id="${t.id_tanque}" data-modelo="${t.modelo || '-'}">Ver Insumos</button>`
+            : `<button class="btn btn-warning btn-sm" onclick="finalizarTanque(${t.id_tanque})">Finalizar</button>
+               <button class="btn btn-info btn-sm" onclick="verInsumos(this)" data-id="${t.id_tanque}" data-modelo="${t.modelo || '-'}">Ver Insumos</button>`
+          }
         </td>
       </tr>
     `;
   });
 }
+
 
 
 
@@ -339,6 +339,18 @@ async function finalizarTanque(id) {
 
 
 
+async function desfinalizarTanque(id) {
+    if (!confirm('¿Desea desfinalizar este tanque?')) return;
+
+    const res = await fetch(`/api/v1/tanques/${id}/desfinalizar`, { method: 'PUT' });
+    if (!res.ok) {
+        const data = await res.json();
+        return alert('⚠️ Error: ' + (data.error || 'No se pudo desfinalizar'));
+    }
+
+    alert('Tanque desfinalizado correctamente');
+    cargarTanques();
+}
 
 
 

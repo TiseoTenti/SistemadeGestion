@@ -169,20 +169,22 @@ function renderTablaCompras(data) {
             onclick="abrirModalEditar(${c.id_compra}, ${c.cantidad}, ${c.precio_unitario}, '${c.fecha}')">
             Editar
           </button>
+          <button
+            class="btn btn-sm ms-2 btn-revisado ${c.revisado ? 'activo' : ''}"
+            onclick="marcarRevisado(${c.id_compra})"
+            ${c.revisado ? 'disabled' : ''}>
+            Revisado
+          </button>
 
-          ${c.revisado
-            ? '<span class="badge bg-success ms-2">Revisado</span>'
-            : `<button class="btn btn-sm btn-success ms-2"
-                onclick="marcarRevisado(${c.id_compra})">
-                Revisado
-              </button>`}
+          ${currentUserIsAdmin ? `
+          <button
+            class="btn btn-sm ms-2 btn-confirmado ${c.confirmado ? 'activo' : ''}"
+            onclick="marcarConfirmado(${c.id_compra})"
+            ${c.confirmado ? 'disabled' : ''}>
+            Confirmar
+            </button>
+            ` : ''}
 
-          ${c.confirmado
-          ? '<span class="badge bg-primary ms-2">Confirmado</span>'
-          : currentUserIsAdmin ? `<button class="btn btn-sm btn-primary ms-2"
-              onclick="marcarConfirmado(${c.id_compra})">
-              Confirmar
-            </button>` : ''}
         </td>
       </tr>`;
   });
@@ -200,22 +202,6 @@ async function cargarAutocompleteInsumos() {
     datalist.innerHTML += `<option value="${i.nombre}"></option>`;
   });
 }
-
-
-async function marcarConfirmado(id) {
-  const res = await fetch(`/api/v1/compras/${id}/confirmar`, {
-    method: 'PUT'
-  });
-
-  if (res.ok) {
-    await cargarHistorialCompras();
-    alert('Compra confirmada correctamente');
-  } else {
-    const err = await res.json();
-    alert('Error al confirmar: ' + (err.error || 'Desconocido'));
-  }
-}
-
 
 
 
@@ -340,9 +326,7 @@ async function buscarPorProveedor() {
 
 
 async function marcarRevisado(id) {
-  const res = await fetch(`/api/v1/compras/${id}/revisar`, {
-    method: 'PUT'
-  });
+  const res = await fetch(`/api/v1/compras/${id}/revisar`, { method: 'PUT'});
 
   if (res.ok) {
     await cargarHistorialCompras();
@@ -350,6 +334,22 @@ async function marcarRevisado(id) {
     alert('No se pudo marcar como revisada');
   }
 }
+
+
+async function marcarConfirmado(id) {
+  const res = await fetch(`/api/v1/compras/${id}/confirmar`, {method: 'PUT'});
+
+  if (res.ok) {
+    await cargarHistorialCompras();
+    alert('Compra confirmada correctamente');
+  } else {
+    const err = await res.json();
+    alert('Error al confirmar: ' + (err.error || 'Desconocido'));
+  }
+}
+
+
+
 
 
 

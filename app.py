@@ -82,8 +82,12 @@ def create_app():
     @app.route('/insumos_salida', methods=['GET', 'POST'])
     @login_required
     def registrar_salida_insumo():
-        return render_template('insumos_salida.html',)# tanques=tanques, insumos=insumos)
+        is_admin = getattr(current_user, 'role', 'user') == 'administrador'
+        return render_template('insumos_salida.html', current_user_is_admin=is_admin)
+
     return app
+
+
 
 
 # ------------------------------------------------------------

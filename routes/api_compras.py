@@ -133,8 +133,13 @@ def compras_por_insumo(id_insumo):
     return jsonify([c.to_dict() for c in compras])
 
 
+
+@login_required
 @compras_bp.route('/<int:id_compra>', methods=['PUT'])
 def actualizar_compra(id_compra):
+
+    if getattr(current_user, 'role', 'user') != 'administrador':
+        return jsonify({'error': 'No autorizado'}), 403
 
     data = request.json
     compra = Compra.query.get_or_404(id_compra)
