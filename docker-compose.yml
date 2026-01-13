@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    container_name: inventario_db
+    environment:
+      POSTGRES_USER: inventario_user
+      POSTGRES_PASSWORD: Daniela33
+      POSTGRES_DB: inventario_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: inventario_web
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+psycopg2://inventario_user:Daniela33@db:5432/inventario_db
+
+volumes:
+  pgdata:
