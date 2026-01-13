@@ -7,9 +7,11 @@ Se le agrego la funcion de agregar al inventario las compras realizadas para mej
 El proyecto está pensado para implementarse  de prueba y de testing, ademas incluye una base de datos SQLite con datos de prueba para facilitar su evaluación y navegación.
 
 
+
 ## Requisitos
 
-- Python 3.11.9
+- Python 3.11+
+- PostgreSQL 15
 
 
 # Credenciales de prueba
