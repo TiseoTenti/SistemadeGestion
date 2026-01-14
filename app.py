@@ -13,8 +13,13 @@ from decimal import Decimal
 def create_app():
     app = Flask(__name__, static_folder='static', template_folder='templates')
     app.config['SECRET_KEY'] = 'clave_secreta_segura'
-    app.config['SQLALCHEMY_DATABASE_URI'] = (
-        'postgresql+psycopg2://inventario_user:Daniela33@localhost:5432/inventario_db')
+    import os
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+         'DATABASE_URL',
+         'postgresql+psycopg2://inventario_user:Daniela33@localhost:5432/inventario_db'
+)
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Inicializar extensiones
