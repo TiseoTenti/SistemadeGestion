@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 5000
 
 # Comando para correr la app
-CMD ["python", "app.py"]
+CMD ["python", "run_pro.py"]
