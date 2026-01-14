@@ -17,7 +17,7 @@ def create_app():
 
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
          'DATABASE_URL',
-         'postgresql+psycopg2://inventario_user:Daniela33@localhost:5432/inventario_db'
+         'postgresql+psycopg2://inventario_user:Daniela33@db:5432/inventario_db'
 )
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
