@@ -15,4 +15,5 @@ COPY . .
 EXPOSE 5000
 
 # Comando para correr la app
-CMD ["python", "run_pro.py"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:create_app()"]
+

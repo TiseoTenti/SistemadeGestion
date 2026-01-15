@@ -12,7 +12,7 @@ from decimal import Decimal
 # ------------------------------------------------------------
 def create_app():
     app = Flask(__name__, static_folder='static', template_folder='templates')
-    app.config['SECRET_KEY'] = 'clave_secreta_segura'
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     import os
 
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
@@ -94,11 +94,10 @@ def create_app():
     return app
 
 
-
+app = create_app()
 
 # ------------------------------------------------------------
 # EJECUCIÓN
 # ------------------------------------------------------------
 if __name__ == '__main__':
-    app = create_app()
-    app.run(debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)
